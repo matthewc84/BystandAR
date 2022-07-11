@@ -20,7 +20,7 @@ public class NetworkBehaviour : MonoBehaviour
     // Public fields
     public Vector2 InputFeatureSize = new Vector2(640, 480);
     public GameObject objectOutlineCube;
-    public int samplingInterval = 300;
+    public int samplingInterval = 60;
     int counter = 0;
 
     // Private fields
@@ -100,7 +100,7 @@ public class NetworkBehaviour : MonoBehaviour
     {
 #if ENABLE_WINMD_SUPPORT
     counter += 1; 
-        if (counter >= samplingInterval && currentState == 2)
+        if (counter >= samplingInterval)
         {
             counter = 0;
             currentState = (int)SystemStates.DetectingObjects;
@@ -127,8 +127,8 @@ public class NetworkBehaviour : MonoBehaviour
 
                 UnityEngine.WSA.Application.InvokeOnAppThread(() =>
                 {
-                    //bool successObjVisualization = RunDetectionVisualization(result, InputFeatureSize);
-                }, true);
+                    RunDetectionVisualization(result, InputFeatureSize);
+                }, false);
 
             });
 #endif
@@ -148,7 +148,7 @@ public class NetworkBehaviour : MonoBehaviour
     {
         
         //currentState = (int)SystemStates.DetectingObjects;
-        InferenceResult result = new InferenceResult();;
+        InferenceResult result = new InferenceResult();
 
 
         if (_mediaCaptureUtility.IsCapturing)
@@ -179,32 +179,12 @@ public class NetworkBehaviour : MonoBehaviour
         }
     }
 
-   /* private bool RunDetectionVisualization(InferenceResult result, Vector2 InputFeatureSize)
+   private void RunDetectionVisualization(InferenceResult result, Vector2 InputFeatureSize)
     {
-        if (result?.Any() == true)
-        {
-            foreach (NetworkResult detection in result)
-            {
-                Debug.Log("***********************************************************************");
-                Debug.Log("BBox x coord is: " + detection.bbox[0] + " and BBox y coord is :" + detection.bbox[1] + " and the width is: " + detection.bbox[2] +
-                 " and the height is: " + detection.bbox[3]);
-                 Debug.Log("***********************************************************************");
-                 GameObject newObject = Instantiate(objectOutlineCube, tempLocation, Quaternion.identity);
-                 Vector3 localScale = new Vector3((detection.bbox[2] / InputFeatureSize.x) * hit.distance, (detection.bbox[3] / InputFeatureSize.y) * hit.distance, depths[detection.label]);
-            }
-            
-            currentState = (int)SystemStates.Waiting;
-            return true;
-        }
-        else
-        {
-            //Debug.Log("No Detections found in frame");
-            currentState = (int)SystemStates.Waiting;
-            result.Clear();
-            return false;
-        }
+        Debug.Log("Boxes size: " + result.boxes.Count);
+        Debug.Log("Scores size: " + result.scores.Count);
 
-    }*/
+    }
 
 
 #endif
