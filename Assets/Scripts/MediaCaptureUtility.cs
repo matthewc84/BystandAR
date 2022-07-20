@@ -22,8 +22,6 @@ using System.Threading.Tasks;
 
 public class MediaCaptureUtility
 {
-    private const string SessionFolderRoot = "RGBLogger";
-    private string m_sessionPath;
     public bool IsCapturing { get; set; }
 
 #if ENABLE_WINMD_SUPPORT
@@ -39,7 +37,7 @@ public class MediaCaptureUtility
     /// <param name="width"></param>
     /// <param name="height"></param>
     /// <returns></returns>
-    public async Task InitializeMediaFrameReaderAsync(uint width, uint height)
+    public async Task InitializeMediaFrameReaderAsync()
     {
         // Check state of media capture object 
         if (_mediaCapture == null || _mediaCapture.CameraStreamState == CameraStreamState.Shutdown || _mediaCapture.CameraStreamState == CameraStreamState.NotStreaming)
@@ -52,14 +50,16 @@ public class MediaCaptureUtility
             // Find right camera settings and prefer back camera
             MediaCaptureInitializationSettings settings = new MediaCaptureInitializationSettings();
             var allCameras = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+            //Debug.Log($"InitializeMediaFrameReaderAsync: allCameras: {allCameras}");
+
             var selectedCamera = allCameras.FirstOrDefault(c => c.EnclosureLocation?.Panel == Panel.Back) ?? allCameras.FirstOrDefault();
-            Debug.Log($"InitializeMediaFrameReaderAsync: selectedCamera: {selectedCamera}");
+            //Debug.Log($"InitializeMediaFrameReaderAsync: selectedCamera: {selectedCamera}");
 
 
             if (selectedCamera != null)
             {
                 settings.VideoDeviceId = selectedCamera.Id;
-                Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
+                //Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
 
             }
 
@@ -75,9 +75,10 @@ public class MediaCaptureUtility
 
             // Convert the pixel formats
             var subtype = MediaEncodingSubtypes.Bgra8;
+            //var subtype = MediaEncodingSubtypes.Rgb32;
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
-            BitmapSize outputSize = new BitmapSize { Width = width, Height = height };
+            BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
             _mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSource.Value, subtype, outputSize);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media frame reader.");
 

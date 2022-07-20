@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 #if ENABLE_WINMD_SUPPORT
 using Windows.AI.MachineLearning;
@@ -17,67 +18,29 @@ using Windows.Storage.Streams;
 using Windows.Media;
 using Windows.Storage;
 using Windows.Media.Capture;
-#endif
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.Graphics.Imaging;
+using Windows.Foundation;
+using Windows.Media.FaceAnalysis;
 
-public class InferenceResult
+
+
+public struct DetectedFaces
 {
-    public List<float> boxes;
-    public List<float> scores;
+    public SoftwareBitmap originalImageBitmap { get; set; }
+    public int FrameWidth { get; set; }
+    public int FrameHeight { get; set; }
+    public Rect[] Faces { get; set; }
 }
 
+#endif
 
-//https://github.com/takuya-takeuchi/UltraFaceDotNet/tree/9418a0a2ce31e844667212c09d7457ee451ba936/src/UltraFaceDotNet
-/// <summary>
-/// Describes the location of a face. This class cannot be inherited.
-/// </summary>
-public sealed class FaceInfo
+public struct Rect
 {
-
-    /// <summary>
-    /// Gets the x-axis value of the left side of the rectangle of face.
-    /// </summary>
-    public float X1
-    {
-        get;
-        internal set;
-    }
-
-    /// <summary>
-    /// Gets the y-axis value of the top of the rectangle of face.
-    /// </summary>
-    public float Y1
-    {
-        get;
-        internal set;
-    }
-
-    /// <summary>
-    /// Gets the x-axis value of the right side of the rectangle of face.
-    /// </summary>
-    public float X2
-    {
-        get;
-        internal set;
-    }
-
-    /// <summary>
-    /// Gets the y-axis value of the bottom of the rectangle of face.
-    /// </summary>
-    public float Y2
-    {
-        get;
-        internal set;
-    }
-
-    /// <summary>
-    /// Gets the score of the rectangle of face.
-    /// </summary>
-    public float Score
-    {
-        get;
-        internal set;
-    }
-
+    public uint X { get; set; }
+    public uint Y { get; set; }
+    public uint Width { get; set; }
+    public uint Height { get; set; }
 }
 
 public class NetworkModel
@@ -85,9 +48,8 @@ public class NetworkModel
 
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _media_capture;
-    private LearningModel _model;
-    private LearningModelSession _session;
-    private LearningModelBinding _binding;
+    FaceDetector detector;
+    IList<DetectedFace> detectedFaces;
 
 #endif
 
@@ -95,29 +57,20 @@ public class NetworkModel
 
 #if ENABLE_WINMD_SUPPORT
 
-
-    public async Task InitModelAsync()
+    public async Task<DetectedFaces> EvaluateVideoFrameAsync(VideoFrame inputFrame)
     {
-        var model_file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets//version-RFB-640.onnx"));
-        _model = await LearningModel.LoadFromStorageFileAsync(model_file);
-       // var device = new LearningModelDevice(LearningModelDeviceKind.Cpu);
-        _session = new LearningModelSession(_model);
-        _binding = new LearningModelBinding(_session);
-
-    }
-    public async Task<InferenceResult> EvaluateVideoFrameAsync(VideoFrame inputFrame)
-    {
+        DetectedFaces result = new DetectedFaces();
         // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
-        if (_model == null || inputFrame == null || (inputFrame.Direct3DSurface == null && inputFrame.SoftwareBitmap == null))
+        if (inputFrame == null || (inputFrame.Direct3DSurface == null && inputFrame.SoftwareBitmap == null))
         {
             UnityEngine.Debug.Log("Frame thrown out");
-            return null;
+            return result;
         }
         
         try{
 
             // Perform network model inference using the input data tensor, cache output and time operation
-            InferenceResult result = await EvaluateFrame(inputFrame);
+            result = await EvaluateFrame(inputFrame);
 
 
         return result;
@@ -126,33 +79,50 @@ public class NetworkModel
          catch (Exception ex)
         {
             throw;
-            return null;
+            return result;
         }
 
     }
 
-   private async Task<InferenceResult> EvaluateFrame(VideoFrame frame)
-        {
+   private async Task<DetectedFaces> EvaluateFrame(VideoFrame frame)
+   {
+            SoftwareBitmap bitmap;
+			if (detector == null)
+            {
+                detector = await FaceDetector.CreateAsync();
+            }
+            if (frame.Direct3DSurface != null && frame.SoftwareBitmap == null)
+            {
+                bitmap  = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Direct3DSurface);
+            }
+            else{
+                bitmap = frame.SoftwareBitmap;
+            }
 
-            _binding.Clear();
-            _binding.Bind("input", frame);
-
-            var results = await _session.EvaluateAsync(_binding, "");
-
-            TensorFloat boxes = results.Outputs["boxes"] as TensorFloat;
-            TensorFloat scores = results.Outputs["scores"] as TensorFloat;
-            //var shape = result.Shape;
-            var boxesFloat = boxes.GetAsVectorView();
-            var scoresFloat = scores.GetAsVectorView();
-
-            InferenceResult result = new InferenceResult();;
-            result.boxes = boxesFloat.ToList<float>();
-            result.scores = scoresFloat.ToList<float>();
-            return result;
-        }
+			const BitmapPixelFormat faceDetectionPixelFormat = BitmapPixelFormat.Nv12;
+            SoftwareBitmap convertedBitmap;
+            if (bitmap.BitmapPixelFormat != faceDetectionPixelFormat)
+            {
+                convertedBitmap = SoftwareBitmap.Convert(bitmap, faceDetectionPixelFormat);
+            }
+            else
+            {
+                convertedBitmap = bitmap;
+            }
+			detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+       
+            return new DetectedFaces
+			{
+                originalImageBitmap = bitmap,
+			    FrameWidth = convertedBitmap.PixelHeight,
+			    FrameHeight = convertedBitmap.PixelWidth,
+			    Faces = detectedFaces.Select(f => 
+			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
+			};
+            Debug.Log("3");
+   }
 
 
 #endif
-
 
 }
