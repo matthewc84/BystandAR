@@ -155,6 +155,7 @@ MonoBehaviour:
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
   quad: {fileID: 834558299}
   samplingInterval: 60
+  TempCamera: {fileID: 6542162625677493792, guid: 79aaac96d421a434daaf4cb15f4619a2, type: 3}
   currentState: 0
 --- !u!4 &648552315
 Transform:

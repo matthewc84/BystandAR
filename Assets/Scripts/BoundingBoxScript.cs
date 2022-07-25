@@ -28,7 +28,7 @@ public class BoundingBoxScript : MonoBehaviour
 
     void Update()
     {
-
+        counter += 1;
         if (counter > 30)
         {
             counter = 0;

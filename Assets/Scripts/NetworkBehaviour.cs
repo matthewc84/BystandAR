@@ -17,8 +17,6 @@ using System.IO;
 #if ENABLE_WINMD_SUPPORT
 using Windows.Media;
 using Windows.Graphics.Imaging;
-
-
 #endif
 
 public class NetworkBehaviour : MonoBehaviour
@@ -27,12 +25,12 @@ public class NetworkBehaviour : MonoBehaviour
     public GameObject objectOutlineCube;
     public GameObject quad;
     public int samplingInterval = 60;
+    public GameObject TempCamera;
 
     // Private fields
     private NetworkModel _networkModel;
     private MediaCaptureUtility _mediaCaptureUtility;
     private bool _isRunning = false;
-    private Camera cam;
     public int currentState;
     int counter = 0;
     GameObject cameraGameObject;
@@ -52,10 +50,10 @@ public class NetworkBehaviour : MonoBehaviour
     }
     async void Start()
     {
-        cam = Camera.main;
-        cameraGameObject = new GameObject();
-        newCamera = cameraGameObject.AddComponent<Camera>();
+        cameraGameObject = Instantiate(TempCamera);
+        newCamera = cameraGameObject.GetComponent<Camera>();
         newCamera.enabled = false;
+        
 
         try
         {
@@ -130,17 +128,16 @@ public class NetworkBehaviour : MonoBehaviour
             {
                 UnityEngine.WSA.Application.InvokeOnAppThread(() =>
                 {
-               Debug.Log("Setting Temp Camera");
                     //take "snapshot" of current camera position and rotation, so if user moves while model is working on detection, the resulting location wont be skewed
-                    newCamera.transform.position = cam.transform.position;
-                    newCamera.transform.rotation = cam.transform.rotation;
-                }, false);
-               Debug.Log("Running Model");
+                   Vector3 tempLocation = UnityEngine.Camera.main.transform.position;
+                   //tempLocation.y = tempLocation.y - .2f;
+                   newCamera.transform.position = tempLocation;
+                   newCamera.transform.rotation = UnityEngine.Camera.main.transform.rotation;
+                }, true);
                 var result = await RunDetectionModel();
 
                 UnityEngine.WSA.Application.InvokeOnAppThread(() =>
                 {
-               Debug.Log("Running Visualization");
                     RunDetectionVisualization(result, newCamera);
                 }, false);
 
@@ -200,20 +197,21 @@ public class NetworkBehaviour : MonoBehaviour
         // Bit shift the index of the layer (31) to get a bit mask
         int layerMask = 1 << 31;
 
-        Debug.Log("Number of face: " + result.Faces.Count());
+        Debug.Log("Number of faces: " + result.Faces.Count());
 
         byte[] imageBytes = new byte[8 * result.originalImageBitmap.PixelWidth * result.originalImageBitmap.PixelHeight];
 	    result.originalImageBitmap.CopyToBuffer(imageBytes.AsBuffer());
 
         foreach (Rect face in result.Faces)
         {
+            double xCoord = (((double)face.X + ((double)face.Width / 2.0F)) / (double)result.FrameWidth);
+            double yCoord = ((double)result.originalImageBitmap.PixelHeight - ((double)face.Y - (double)face.Height / 2.0F)) / (double)result.FrameHeight;
             Debug.Log("***********************************************************************");
-            Debug.Log("BBox x coord is: " + face.X + " and BBox y coord is :" + face.Y + " and the width is: " + face.Width +
-             " and the height is: " + face.Height);
+            //Debug.Log("BBox x coord is: " + face.X + " and BBox y coord is :" + face.Y + " and the width is: " + face.Width +
+            // " and the height is: " + face.Height + " and the Width of the Image is " + result.originalImageBitmap.PixelWidth + " and the Height of the image is " + result.originalImageBitmap.PixelHeight);
+            Debug.Log((float)xCoord + ", " + (float)yCoord);
             Debug.Log("***********************************************************************");
-            uint faceIndex= (face.Y-1)*4 + (face.X-1)*4;
-            Ray ray = tempCamera.ViewportPointToRay(new Vector3(face.X / result.FrameWidth, face.Y / result.FrameHeight, 0));
-
+            Ray ray = tempCamera.ViewportPointToRay(new Vector3((float)xCoord, (float)yCoord * 0.90f, 0));
             if (Physics.Raycast(ray, out hit, 10, layerMask))
             {
 

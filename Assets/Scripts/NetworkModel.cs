@@ -114,12 +114,12 @@ public class NetworkModel
             return new DetectedFaces
 			{
                 originalImageBitmap = bitmap,
-			    FrameWidth = convertedBitmap.PixelHeight,
-			    FrameHeight = convertedBitmap.PixelWidth,
+			    FrameWidth = convertedBitmap.PixelWidth,
+			    FrameHeight = convertedBitmap.PixelHeight,
 			    Faces = detectedFaces.Select(f => 
 			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
 			};
-            Debug.Log("3");
+
    }
 
 
