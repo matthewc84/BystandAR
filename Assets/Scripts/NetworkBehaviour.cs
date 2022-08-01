@@ -70,7 +70,7 @@ public class NetworkBehaviour : MonoBehaviour
 #endif
 
     int counter = 0;
-    //Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
+    Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
 
     float averageFaceWidthInMeters = 0.15f;
 
@@ -78,16 +78,12 @@ public class NetworkBehaviour : MonoBehaviour
 
     private void Awake()
     {
-#if ENABLE_WINMD_SUPPORT
-       /*worldSpatialCoordinateSystem = SpatialLocator.GetDefault().CreateStationaryFrameOfReferenceAtCurrentLocation(NumericsConversionExtensions.ToSystem(Camera.main.transform.position*-1), 
-            NumericsConversionExtensions.ToSystem(Quaternion.Inverse(Camera.main.transform.rotation))).CoordinateSystem;*/
-        //worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
-#endif
+
     }
 
     async void Start()
     {
-        //eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
+        eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
 
 
         try
@@ -135,7 +131,8 @@ public class NetworkBehaviour : MonoBehaviour
     async void Update()
     {
 #if ENABLE_WINMD_SUPPORT
-    counter += 1; 
+    counter += 1;
+        Frame returnFrame = _mediaCaptureUtility.GetLatestFrame();
         if (counter >= samplingInterval)
         {
             counter = 0;
@@ -145,7 +142,6 @@ public class NetworkBehaviour : MonoBehaviour
 
                 if (_mediaCaptureUtility.IsCapturing)
                 {
-                    Frame returnFrame = _mediaCaptureUtility.GetLatestFrame();
                         try
                         {
                             // Get the current network prediction from model and input frame
@@ -166,8 +162,11 @@ public class NetworkBehaviour : MonoBehaviour
 
             //});
 
+
         }
+
 #endif
+
     }
 
     #endregion
@@ -183,8 +182,6 @@ public class NetworkBehaviour : MonoBehaviour
         // Bit shift the index of the layer (31) to get a bit mask
         int layerMask = 1 << 31;
         //Debug.Log("Number of faces: " + result.Faces.Count());
-        byte[] imageBytes = new byte[8 * result.originalImageBitmap.PixelWidth * result.originalImageBitmap.PixelHeight];
-	    result.originalImageBitmap.CopyToBuffer(imageBytes.AsBuffer());
         worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
         var cameraToWorld = (System.Numerics.Matrix4x4)returnFrame.spatialCoordinateSystem.TryGetTransformTo(worldSpatialCoordinateSystem);
         UnityEngine.Matrix4x4 unityCameraToWorld = NumericsConversionExtensions.ToUnity(cameraToWorld);
@@ -203,34 +200,36 @@ public class NetworkBehaviour : MonoBehaviour
             //I tested this program using face images found on google. Problem is that small, thumbnail images are thought to be farther away than they actually are using a pixel/width method
             //Here, we use a raycast to judge if there is a physical object between the headset and the expected depth, likely a monitor.  If so, we set the depth to that reading.
             float estimatedFaceDepth = averagePixelsForFaceAt1Meter / (float)face.Width;
-            if (Physics.Raycast(Camera.main.transform.position, normalizedVector, out hit, Mathf.Infinity, layerMask))
-            {
-                if(estimatedFaceDepth > (hit.point.z- Camera.main.transform.position.z))
-                {
-                    Debug.Log("hit");
-                    estimatedFaceDepth = (hit.point.z - Camera.main.transform.position.z);
-                }
-  
-            }
+            
             Vector3 targetPositionInCameraSpace = normalizedVector * estimatedFaceDepth;
             Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
             var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
         }
  
-	    Texture2D photoTexture = new Texture2D(result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
+    }
+
+    private void AnalyzeFrame(Frame returnFrame)
+    {
+        byte[] imageBytes = new byte[8 * 1280 * 720];
+	    result.originalImageBitmap.CopyToBuffer(imageBytes.AsBuffer());
+        Texture2D photoTexture = new Texture2D(result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
 	    photoTexture.LoadRawTextureData(imageBytes);
         photoTexture.Apply();
 
         // Create a GameObject to which the texture can be applied
         quadRenderer.material.SetTexture("_MainTex", photoTexture);
-
-
-
     }
+
 
 
 #endif
 
-
+    private void ObscureFaces()
+    {
+        foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
+        {
+            Debug.Log("1");
+        }
+    }
 
 }

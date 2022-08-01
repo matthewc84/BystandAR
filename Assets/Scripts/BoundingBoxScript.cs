@@ -7,14 +7,12 @@ using System.Diagnostics;
 
 public class BoundingBoxScript : MonoBehaviour
 {
-    TextMeshPro textComponent;
-    public string label;
     int counter;
+    public int framesEyeContactMade = 0;
 
 
     void Start()
     {
-        textComponent = this.GetComponentInChildren<TextMeshPro>();
         counter = 0;
 
     }
@@ -35,9 +33,20 @@ public class BoundingBoxScript : MonoBehaviour
             RemoveDetection();
         }
 
+        if(framesEyeContactMade > 10)
+        {
+            
+            UnityEngine.Debug.Log("20 frames eye contact, resetting....");
+            framesEyeContactMade = 0;
+        }
 
 
+    }
 
+    public void EyeContactMade()
+    {
+        this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+        framesEyeContactMade += 1;
     }
 
 }
