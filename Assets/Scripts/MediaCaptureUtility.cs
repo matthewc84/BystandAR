@@ -3,22 +3,35 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
 #if ENABLE_WINMD_SUPPORT
 using Windows.Media;
 using Windows.Media.Capture;
-using Windows.Storage.Streams;
+using Windows.Media.Devices.Core;
+//using Windows.Storage.Streams;
 using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Media.Devices;
 using Windows.Graphics.Imaging;
 using Windows.Devices.Enumeration;
-using Windows.Storage;
+//using Windows.Storage;
 using Windows.System;
-using System.Threading.Tasks;
-#endif 
+using Windows.Perception.Spatial;
+//using System.Threading.Tasks;
+
+
+public struct Frame
+{
+    public MediaFrameReference mediaFrameReference;
+    public SpatialCoordinateSystem spatialCoordinateSystem;
+    public CameraIntrinsics cameraIntrinsics;
+    public VideoFrame videoFrame;
+    //public long timestamp;
+}
+#endif
 
 public class MediaCaptureUtility
 {
@@ -27,7 +40,8 @@ public class MediaCaptureUtility
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _mediaCapture;
     private MediaFrameReader _mediaFrameReader;
-    private VideoFrame _videoFrame;
+    private Frame _videoFrame;
+    private SpatialCoordinateSystem spatialCoordinateSystem;
     public VideoFrame latestFrame;
 
 
@@ -70,8 +84,8 @@ public class MediaCaptureUtility
             await _mediaCapture.InitializeAsync(settings);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully initialized media capture object.");
 
-            var frameSource = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
-            Debug.Log($"InitializeMediaFrameReaderAsync: frameSource: {frameSource}.");
+            var frameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
+            Debug.Log($"InitializeMediaFrameReaderAsync: frameSourcePair: {frameSourcePair}.");
 
             // Convert the pixel formats
             var subtype = MediaEncodingSubtypes.Bgra8;
@@ -79,9 +93,9 @@ public class MediaCaptureUtility
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
-            _mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSource.Value, subtype, outputSize);
+            //BitmapSize outputSize = new BitmapSize { Width = 1440, Height = 936};
+            _mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSourcePair.Value, subtype, outputSize);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media frame reader.");
-
             _mediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
 
             await _mediaFrameReader.StartAsync();
@@ -95,19 +109,28 @@ public class MediaCaptureUtility
     /// Retrieve the latest video frame from the media frame reader
     /// </summary>
     /// <returns>VideoFrame object with current frame's software bitmap</returns>
-    public VideoFrame GetLatestFrame()
+    public Frame  GetLatestFrame()
     {
         try{
         // The overloads of CreateFrameReaderAsync with the format arguments will actually return a copy so we don't have to copy again
         var mediaFrameReference = _mediaFrameReader.TryAcquireLatestFrame();
         VideoFrame videoFrame = mediaFrameReference?.VideoMediaFrame?.GetVideoFrame();
-        return videoFrame;
+        var spatialCoordinateSystem = mediaFrameReference.CoordinateSystem;
+        var cameraIntrinsics = mediaFrameReference.VideoMediaFrame.CameraIntrinsics;
+        return new Frame{
+                mediaFrameReference = mediaFrameReference,
+                spatialCoordinateSystem = spatialCoordinateSystem,
+                cameraIntrinsics = cameraIntrinsics,
+                videoFrame = videoFrame
+                //timestamp = Utils.GetCurrentUnixTimestampMillis()
+                };
         }
         catch (Exception ex){
         Debug.Log("Caught exception grabbing frame");
         return _videoFrame;
         }
     }
+
 #endif
 
     /// <summary>

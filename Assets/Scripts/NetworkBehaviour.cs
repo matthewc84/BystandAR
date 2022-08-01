@@ -1,23 +1,56 @@
-﻿// Adapted from the WinML MNIST sample and Rene Schulte's repo 
-// https://github.com/microsoft/Windows-Machine-Learning/tree/master/Samples/MNIST
-// https://github.com/reneschulte/WinMLExperiments/
+﻿// Adapted from the Window's MR Holographic face tracking sample
+// https://docs.microsoft.com/en-us/samples/microsoft/windows-universal-samples/holographicfacetracking/
+//And this repo by Mitchell Doughty
+//https://github.com/doughtmw/YoloDetectionHoloLens-Unity
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.InteropServices;
 using System.IO;
+using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Utilities;
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.OpenXR;
 
 
 
 #if ENABLE_WINMD_SUPPORT
 using Windows.Media;
 using Windows.Graphics.Imaging;
+using Windows.Foundation;
+using Windows.Media.Devices.Core;
+using Windows.Perception.Spatial;
+using Windows.Perception.Spatial.Preview;
+
+//using HL2UnityPlugin;
+
 #endif
+
+//https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/unity-xrdevice-advanced?tabs=mrtk
+public static class NumericsConversionExtensions
+{
+    public static UnityEngine.Vector3 ToUnity(this System.Numerics.Vector3 v) => new UnityEngine.Vector3(v.X, v.Y, -v.Z);
+    public static UnityEngine.Quaternion ToUnity(this System.Numerics.Quaternion q) => new UnityEngine.Quaternion(q.X, q.Y, -q.Z, -q.W);
+    public static UnityEngine.Matrix4x4 ToUnity(this System.Numerics.Matrix4x4 m) => new UnityEngine.Matrix4x4(
+        new Vector4(m.M11, m.M12, -m.M13, m.M14),
+        new Vector4(m.M21, m.M22, -m.M23, m.M24),
+        new Vector4(-m.M31, -m.M32, m.M33, -m.M34),
+        new Vector4(m.M41, m.M42, -m.M43, m.M44));
+
+    public static System.Numerics.Vector3 ToSystem(this UnityEngine.Vector3 v) => new System.Numerics.Vector3(v.x, v.y, -v.z);
+    public static System.Numerics.Quaternion ToSystem(this UnityEngine.Quaternion q) => new System.Numerics.Quaternion(q.x, q.y, -q.z, -q.w);
+    public static System.Numerics.Matrix4x4 ToSystem(this UnityEngine.Matrix4x4 m) => new System.Numerics.Matrix4x4(
+        m.m00, m.m10, -m.m20, m.m30,
+        m.m01, m.m11, -m.m21, m.m31,
+       -m.m02, -m.m12, m.m22, -m.m32,
+        m.m03, m.m13, -m.m23, m.m33);
+}
 
 public class NetworkBehaviour : MonoBehaviour
 {
@@ -25,45 +58,44 @@ public class NetworkBehaviour : MonoBehaviour
     public GameObject objectOutlineCube;
     public GameObject quad;
     public int samplingInterval = 60;
-    public GameObject TempCamera;
 
     // Private fields
     private NetworkModel _networkModel;
     private MediaCaptureUtility _mediaCaptureUtility;
     private bool _isRunning = false;
-    public int currentState;
+
+#if ENABLE_WINMD_SUPPORT
+    private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
+    Renderer quadRenderer;
+#endif
+
     int counter = 0;
-    GameObject cameraGameObject;
-    Camera newCamera;
-    private enum SystemStates
-    {
-        Initializing,
-        DetectingObjects,
-        Waiting
-    }
+    //Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
+
+    float averageFaceWidthInMeters = 0.15f;
 
     #region UnityMethods
 
     private void Awake()
     {
-
+#if ENABLE_WINMD_SUPPORT
+       /*worldSpatialCoordinateSystem = SpatialLocator.GetDefault().CreateStationaryFrameOfReferenceAtCurrentLocation(NumericsConversionExtensions.ToSystem(Camera.main.transform.position*-1), 
+            NumericsConversionExtensions.ToSystem(Quaternion.Inverse(Camera.main.transform.rotation))).CoordinateSystem;*/
+        //worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
+#endif
     }
+
     async void Start()
     {
-        cameraGameObject = Instantiate(TempCamera);
-        newCamera = cameraGameObject.GetComponent<Camera>();
-        newCamera.enabled = false;
-        
+        //eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
+
 
         try
         {
-            // Create a new instance of the network model class
-            // and asynchronously load the onnx model
             _networkModel = new NetworkModel();
-
             //Debug.Log("Starting camera...");
 
-        #if ENABLE_WINMD_SUPPORT
+#if ENABLE_WINMD_SUPPORT
             // Configure camera to return frames fitting the model input size
             try
             {
@@ -73,8 +105,8 @@ public class NetworkBehaviour : MonoBehaviour
                 Debug.Log("Camera started. Running!");
 
                 Debug.Log("Successfully initialized frame reader.");
+               quadRenderer = quad.GetComponent<Renderer>() as Renderer;
 
-                currentState = (int)SystemStates.Waiting;
             }
             catch (Exception ex)
             {
@@ -82,7 +114,7 @@ public class NetworkBehaviour : MonoBehaviour
 
             }
 
-        #endif
+#endif
         }
         catch (Exception ex)
         {
@@ -107,9 +139,33 @@ public class NetworkBehaviour : MonoBehaviour
         if (counter >= samplingInterval)
         {
             counter = 0;
-            //currentState = (int)SystemStates.DetectingObjects;
-            bool inferenceSuccess = await RunInferenceOnFrame();
-            
+
+            //Task thread = Task.Run(async () =>
+            //{
+
+                if (_mediaCaptureUtility.IsCapturing)
+                {
+                    Frame returnFrame = _mediaCaptureUtility.GetLatestFrame();
+                        try
+                        {
+                            // Get the current network prediction from model and input frame
+                            var result = await _networkModel.EvaluateVideoFrameAsync(returnFrame.videoFrame);
+                            //UnityEngine.WSA.Application.InvokeOnAppThread(() =>
+                            // {
+                            RunDetectionVisualization(result, returnFrame);
+                            //}, false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.Log("Exception:" + ex.Message);
+                        }
+                }
+                else{
+                    Debug.Log("Media Capture Utility not capturing frames!");
+                }
+
+            //});
+
         }
 #endif
     }
@@ -118,120 +174,54 @@ public class NetworkBehaviour : MonoBehaviour
 
 
 
-
-    public async Task<bool> RunInferenceOnFrame() {
-
-        try
-        {
 #if ENABLE_WINMD_SUPPORT
-            Task thread = Task.Run(async () =>
-            {
-                UnityEngine.WSA.Application.InvokeOnAppThread(() =>
-                {
-                    //take "snapshot" of current camera position and rotation, so if user moves while model is working on detection, the resulting location wont be skewed
-                   Vector3 tempLocation = UnityEngine.Camera.main.transform.position;
-                   //tempLocation.y = tempLocation.y - .2f;
-                   newCamera.transform.position = tempLocation;
-                   newCamera.transform.rotation = UnityEngine.Camera.main.transform.rotation;
-                }, true);
-                var result = await RunDetectionModel();
 
-                UnityEngine.WSA.Application.InvokeOnAppThread(() =>
-                {
-                    RunDetectionVisualization(result, newCamera);
-                }, false);
-
-           });
-#endif
-            return true;
-
-        }
-        catch (Exception e)
-        {
-            throw;
-            return false;
-        }
-
-    }
-
-#if ENABLE_WINMD_SUPPORT
-    private async Task<DetectedFaces> RunDetectionModel()
-    {
-        
-        //currentState = (int)SystemStates.DetectingObjects;
-        DetectedFaces result = new DetectedFaces();
-
-
-        if (_mediaCaptureUtility.IsCapturing)
-        {
-            using (var videoFrame = _mediaCaptureUtility.GetLatestFrame())
-            {
-
-                    try
-                    {
-                        // Get the current network prediction from model and input frame
-
-                        result = await _networkModel.EvaluateVideoFrameAsync(videoFrame);
-                        return result;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.Log("Exception:" + ex.Message);
-                        return result;
-                    
-                    }
-
-            }
-
-        }
-        else{
-            Debug.Log("Media Capture Utility not capturing frames!");
-            return result;
-        }
-    }
-
-   private void RunDetectionVisualization(DetectedFaces result, Camera tempCamera)
+   private void RunDetectionVisualization(DetectedFaces result, Frame returnFrame)
     {
 
         RaycastHit hit;
         // Bit shift the index of the layer (31) to get a bit mask
         int layerMask = 1 << 31;
-
-        Debug.Log("Number of faces: " + result.Faces.Count());
-
+        //Debug.Log("Number of faces: " + result.Faces.Count());
         byte[] imageBytes = new byte[8 * result.originalImageBitmap.PixelWidth * result.originalImageBitmap.PixelHeight];
 	    result.originalImageBitmap.CopyToBuffer(imageBytes.AsBuffer());
-
+        worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
+        var cameraToWorld = (System.Numerics.Matrix4x4)returnFrame.spatialCoordinateSystem.TryGetTransformTo(worldSpatialCoordinateSystem);
+        UnityEngine.Matrix4x4 unityCameraToWorld = NumericsConversionExtensions.ToUnity(cameraToWorld);
+        var pixelsPerMeterAlongX = returnFrame.cameraIntrinsics.FocalLength.X;
+        var averagePixelsForFaceAt1Meter = pixelsPerMeterAlongX * averageFaceWidthInMeters;
+        
         foreach (Rect face in result.Faces)
         {
-            double xCoord = (((double)face.X + ((double)face.Width / 2.0F)) / (double)result.FrameWidth);
-            double yCoord = ((double)result.originalImageBitmap.PixelHeight - ((double)face.Y - (double)face.Height / 2.0F)) / (double)result.FrameHeight;
-            Debug.Log("***********************************************************************");
-            //Debug.Log("BBox x coord is: " + face.X + " and BBox y coord is :" + face.Y + " and the width is: " + face.Width +
-            // " and the height is: " + face.Height + " and the Width of the Image is " + result.originalImageBitmap.PixelWidth + " and the Height of the image is " + result.originalImageBitmap.PixelHeight);
-            Debug.Log((float)xCoord + ", " + (float)yCoord);
-            Debug.Log("***********************************************************************");
-            Ray ray = tempCamera.ViewportPointToRay(new Vector3((float)xCoord, (float)yCoord * 0.90f, 0));
-            if (Physics.Raycast(ray, out hit, 10, layerMask))
+            double xCoord = (double)face.X + ((double)face.Width / 2.0F);
+            double yCoord = (double)face.Y + ((double)face.Height / 2.0F);
+            
+            System.Numerics.Vector2 projectedVector = returnFrame.cameraIntrinsics.UnprojectAtUnitDepth(new Point(xCoord, yCoord));
+            UnityEngine.Vector3 normalizedVector = NumericsConversionExtensions.ToUnity(new System.Numerics.Vector3(projectedVector.X, projectedVector.Y, -1.0f));
+            normalizedVector.Normalize();
+
+            //I tested this program using face images found on google. Problem is that small, thumbnail images are thought to be farther away than they actually are using a pixel/width method
+            //Here, we use a raycast to judge if there is a physical object between the headset and the expected depth, likely a monitor.  If so, we set the depth to that reading.
+            float estimatedFaceDepth = averagePixelsForFaceAt1Meter / (float)face.Width;
+            if (Physics.Raycast(Camera.main.transform.position, normalizedVector, out hit, Mathf.Infinity, layerMask))
             {
-
-                Vector3 tempLocation = hit.point;
-                GameObject newObject = Instantiate(objectOutlineCube, tempLocation, Quaternion.identity);
-                //Vector3 localScale = new Vector3((face.Width / result.FrameWidth), (face.Height / result.FrameHeight), .05F);
-                //newObject.transform.localScale = localScale;
-                //BoxCollider boxCollider = newObject.AddComponent<BoxCollider>();
-
+                if(estimatedFaceDepth > (hit.point.z- Camera.main.transform.position.z))
+                {
+                    Debug.Log("hit");
+                    estimatedFaceDepth = (hit.point.z - Camera.main.transform.position.z);
+                }
+  
             }
-
+            Vector3 targetPositionInCameraSpace = normalizedVector * estimatedFaceDepth;
+            Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
+            var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
         }
  
-
 	    Texture2D photoTexture = new Texture2D(result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
 	    photoTexture.LoadRawTextureData(imageBytes);
         photoTexture.Apply();
 
         // Create a GameObject to which the texture can be applied
-        Renderer quadRenderer = quad.GetComponent<Renderer>() as Renderer;
         quadRenderer.material.SetTexture("_MainTex", photoTexture);
 
 

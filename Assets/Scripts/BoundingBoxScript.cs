@@ -29,7 +29,7 @@ public class BoundingBoxScript : MonoBehaviour
     void Update()
     {
         counter += 1;
-        if (counter > 30)
+        if (counter > 60)
         {
             counter = 0;
             RemoveDetection();
