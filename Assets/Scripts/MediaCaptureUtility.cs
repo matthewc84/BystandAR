@@ -23,13 +23,12 @@ using Windows.Perception.Spatial;
 //using System.Threading.Tasks;
 
 
-public struct Frame
+public class Frame
 {
-    public MediaFrameReference mediaFrameReference;
     public SpatialCoordinateSystem spatialCoordinateSystem;
     public CameraIntrinsics cameraIntrinsics;
-    public VideoFrame videoFrame;
-    //public long timestamp;
+    public SoftwareBitmap bitmap;
+
 }
 #endif
 
@@ -41,8 +40,8 @@ public class MediaCaptureUtility
     private MediaCapture _mediaCapture;
     private MediaFrameReader _mediaFrameReader;
     private Frame _videoFrame;
-    private SpatialCoordinateSystem spatialCoordinateSystem;
-    public VideoFrame latestFrame;
+    //private SpatialCoordinateSystem spatialCoordinateSystem;
+    //public VideoFrame latestFrame;
 
 
     /// <summary>
@@ -93,7 +92,6 @@ public class MediaCaptureUtility
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
-            //BitmapSize outputSize = new BitmapSize { Width = 1440, Height = 936};
             _mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSourcePair.Value, subtype, outputSize);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media frame reader.");
             _mediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
@@ -109,24 +107,41 @@ public class MediaCaptureUtility
     /// Retrieve the latest video frame from the media frame reader
     /// </summary>
     /// <returns>VideoFrame object with current frame's software bitmap</returns>
-    public Frame  GetLatestFrame()
+    public async Task<Frame> GetLatestFrame()
     {
+        SoftwareBitmap bitmap;
         try{
-        // The overloads of CreateFrameReaderAsync with the format arguments will actually return a copy so we don't have to copy again
-        var mediaFrameReference = _mediaFrameReader.TryAcquireLatestFrame();
-        VideoFrame videoFrame = mediaFrameReference?.VideoMediaFrame?.GetVideoFrame();
-        var spatialCoordinateSystem = mediaFrameReference.CoordinateSystem;
-        var cameraIntrinsics = mediaFrameReference.VideoMediaFrame.CameraIntrinsics;
-        return new Frame{
-                mediaFrameReference = mediaFrameReference,
+            // The overloads of CreateFrameReaderAsync with the format arguments will actually return a copy so we don't have to copy again
+            var mediaFrameReference = _mediaFrameReader.TryAcquireLatestFrame();
+            VideoFrame videoFrame = mediaFrameReference?.VideoMediaFrame?.GetVideoFrame();
+            var spatialCoordinateSystem = mediaFrameReference?.CoordinateSystem;
+            var cameraIntrinsics = mediaFrameReference?.VideoMediaFrame?.CameraIntrinsics;
+
+             // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
+            if (videoFrame == null || (videoFrame.Direct3DSurface == null && videoFrame.SoftwareBitmap == null))
+            {
+                UnityEngine.Debug.Log("Frame thrown out");
+                return _videoFrame;
+            }
+
+
+            if (videoFrame.Direct3DSurface != null && videoFrame.SoftwareBitmap == null)
+            {
+                bitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(videoFrame.Direct3DSurface);
+            }
+            else
+            {
+                bitmap = videoFrame.SoftwareBitmap;
+            }
+            return new Frame{
                 spatialCoordinateSystem = spatialCoordinateSystem,
                 cameraIntrinsics = cameraIntrinsics,
-                videoFrame = videoFrame
-                //timestamp = Utils.GetCurrentUnixTimestampMillis()
+                bitmap = bitmap
                 };
         }
         catch (Exception ex){
         Debug.Log("Caught exception grabbing frame");
+        Debug.Log(ex.Message);
         return _videoFrame;
         }
     }

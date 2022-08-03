@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6075948631774348486}
   - component: {fileID: -7009120315968318315}
   - component: {fileID: -2716397250255789392}
+  - component: {fileID: 1049955043121567873}
   m_Layer: 0
   m_Name: ObjectCube
   m_TagString: BoundingBox
@@ -129,6 +130,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framesEyeContactMade: 0
+  toObscure: 1
+  timeSinceInitialization: 0
 --- !u!114 &-2716397250255789392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,12 +155,6 @@ MonoBehaviour:
       m_Calls: []
   whileLookingAtTarget:
     m_PersistentCalls:
-      m_Calls: []
-  onLookAway:
-    m_PersistentCalls:
-      m_Calls: []
-  onDwell:
-    m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: -7009120315968318315}
         m_TargetAssemblyTypeName: BoundingBoxScript, Assembly-CSharp
@@ -171,6 +168,12 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onLookAway:
+    m_PersistentCalls:
+      m_Calls: []
+  onDwell:
+    m_PersistentCalls:
+      m_Calls: []
   onSelected:
     m_PersistentCalls:
       m_Calls: []
@@ -181,3 +184,16 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   eyeCursorSnapToTargetCenter: 0
+--- !u!65 &1049955043121567873
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077441217099968542}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.0015819, y: 1.0284411, z: 1.0620393}
+  m_Center: {x: -0.0019555911, y: -0.009035375, z: 0.003303364}

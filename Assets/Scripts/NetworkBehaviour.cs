@@ -50,6 +50,8 @@ public static class NumericsConversionExtensions
         m.m01, m.m11, -m.m21, m.m31,
        -m.m02, -m.m12, m.m22, -m.m32,
         m.m03, m.m13, -m.m23, m.m33);
+
+    public static System.Numerics.Vector3 ToSystemWithoutConversion(UnityEngine.Vector3 vector) => new System.Numerics.Vector3(vector.x, vector.y, vector.z);
 }
 
 public class NetworkBehaviour : MonoBehaviour
@@ -57,7 +59,7 @@ public class NetworkBehaviour : MonoBehaviour
     // Public fields
     public GameObject objectOutlineCube;
     public GameObject quad;
-    public int samplingInterval = 60;
+    public int samplingInterval;
 
     // Private fields
     private NetworkModel _networkModel;
@@ -132,39 +134,50 @@ public class NetworkBehaviour : MonoBehaviour
     {
 #if ENABLE_WINMD_SUPPORT
     counter += 1;
-        Frame returnFrame = _mediaCaptureUtility.GetLatestFrame();
-        if (counter >= samplingInterval)
+        if (_mediaCaptureUtility.IsCapturing)
         {
-            counter = 0;
+            Frame returnFrame = await _mediaCaptureUtility.GetLatestFrame();
 
-            //Task thread = Task.Run(async () =>
-            //{
+            if(returnFrame.bitmap != null)
+            {
+                var sanitizedFrameByteArray = SanitizeFrame(returnFrame);
 
-                if (_mediaCaptureUtility.IsCapturing)
+                if (counter >= samplingInterval)
                 {
+                    counter = 0;
+
+                    Task thread = Task.Run(async () =>
+                    {
                         try
                         {
-                            // Get the current network prediction from model and input frame
-                            var result = await _networkModel.EvaluateVideoFrameAsync(returnFrame.videoFrame);
-                            //UnityEngine.WSA.Application.InvokeOnAppThread(() =>
-                            // {
-                            RunDetectionVisualization(result, returnFrame);
-                            //}, false);
+                            // Get the prediction from the model
+                            var result = await _networkModel.EvaluateVideoFrameAsync(returnFrame.bitmap);
+                            if (result.Faces.Any())
+                            {
+                                UnityEngine.WSA.Application.InvokeOnAppThread(() =>
+                                {
+                                    //Visualize the detections in 3D to create GameObejcts for eye gaze to interact with
+                                    RunDetectionVisualization(result, returnFrame);
+                                    //Use the 3D bounding boxes to remove "bystanders" and keep "subjects"
+                                    DisplayImageOnQuad(sanitizedFrameByteArray, result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
+                                }, true);
+                            }
+                            //returnFrame.Dispose();
                         }
                         catch (Exception ex)
                         {
                             Debug.Log("Exception:" + ex.Message);
                         }
-                }
-                else{
-                    Debug.Log("Media Capture Utility not capturing frames!");
-                }
 
-            //});
-
+                    });
+                }
+            }
 
         }
-
+        else
+        {
+            //Debug.Log("Media Capture Utility not capturing frames!");
+        }
 #endif
 
     }
@@ -178,9 +191,6 @@ public class NetworkBehaviour : MonoBehaviour
    private void RunDetectionVisualization(DetectedFaces result, Frame returnFrame)
     {
 
-        RaycastHit hit;
-        // Bit shift the index of the layer (31) to get a bit mask
-        int layerMask = 1 << 31;
         //Debug.Log("Number of faces: " + result.Faces.Count());
         worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
         var cameraToWorld = (System.Numerics.Matrix4x4)returnFrame.spatialCoordinateSystem.TryGetTransformTo(worldSpatialCoordinateSystem);
@@ -196,23 +206,31 @@ public class NetworkBehaviour : MonoBehaviour
             System.Numerics.Vector2 projectedVector = returnFrame.cameraIntrinsics.UnprojectAtUnitDepth(new Point(xCoord, yCoord));
             UnityEngine.Vector3 normalizedVector = NumericsConversionExtensions.ToUnity(new System.Numerics.Vector3(projectedVector.X, projectedVector.Y, -1.0f));
             normalizedVector.Normalize();
-
-            //I tested this program using face images found on google. Problem is that small, thumbnail images are thought to be farther away than they actually are using a pixel/width method
-            //Here, we use a raycast to judge if there is a physical object between the headset and the expected depth, likely a monitor.  If so, we set the depth to that reading.
             float estimatedFaceDepth = averagePixelsForFaceAt1Meter / (float)face.Width;
-            
             Vector3 targetPositionInCameraSpace = normalizedVector * estimatedFaceDepth;
             Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
             var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
+            newObject.GetComponent<BoundingBoxScript>().box.X = face.X;
+            newObject.GetComponent<BoundingBoxScript>().box.Y = face.Y;
+            newObject.GetComponent<BoundingBoxScript>().box.Width = face.Width;
+            newObject.GetComponent<BoundingBoxScript>().box.Height = face.Height;
         }
  
     }
 
-    private void AnalyzeFrame(Frame returnFrame)
+    private byte[] SanitizeFrame(Frame returnFrame)
     {
-        byte[] imageBytes = new byte[8 * 1280 * 720];
-	    result.originalImageBitmap.CopyToBuffer(imageBytes.AsBuffer());
-        Texture2D photoTexture = new Texture2D(result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
+        
+        byte[] imageBytes = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
+	    returnFrame.bitmap.CopyToBuffer(imageBytes.AsBuffer());
+        byte[] imageBytesWithoutBystanders = ObscureFaces(imageBytes, returnFrame);
+        return imageBytesWithoutBystanders;
+
+    }
+
+    private void DisplayImageOnQuad(byte[] imageBytes, int width, int height)
+    {
+        Texture2D photoTexture = new Texture2D(width, height);
 	    photoTexture.LoadRawTextureData(imageBytes);
         photoTexture.Apply();
 
@@ -222,14 +240,43 @@ public class NetworkBehaviour : MonoBehaviour
 
 
 
-#endif
 
-    private void ObscureFaces()
+
+    private byte[] ObscureFaces(byte[] inputRawImage, Frame returnFrame)
     {
+        byte[] imageBytesWithoutBystanders = new byte[Buffer.ByteLength(inputRawImage)];
+        inputRawImage.CopyTo(imageBytesWithoutBystanders,0);
+        worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
-            Debug.Log("1");
-        }
-    }
+            var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
+            Rect tempbox = boundingBoxScript.box;
 
+            if (boundingBoxScript.toObscure)
+            {
+                var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
+                UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
+                Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
+                //Debug.Log(cameraSpaceCoordinate);
+                Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
+                //Debug.Log(projected2DPoint);
+
+                var xCoord = (double)projected2DPoint.X - ((double)tempbox.Width / 2.0F);
+                var yCoord = (double)projected2DPoint.Y - ((double)tempbox.Height / 2.0F);
+
+                for (uint rows = (uint)yCoord; rows <= yCoord + tempbox.Height; rows++)
+                {
+                    for (uint columns = (uint)xCoord; columns < xCoord + tempbox.Width; columns++)
+                    {
+                        imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4] = Byte.MaxValue;
+                        imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4 + 1] = Byte.MaxValue;
+                        imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4 + 2] = Byte.MaxValue;
+                    }
+                }
+            }
+
+        }
+        return imageBytesWithoutBystanders;
+    }
+#endif
 }

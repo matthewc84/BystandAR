@@ -57,21 +57,14 @@ public class NetworkModel
 
 #if ENABLE_WINMD_SUPPORT
 
-    public async Task<DetectedFaces> EvaluateVideoFrameAsync(VideoFrame inputFrame)
+    public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)
     {
         DetectedFaces result = new DetectedFaces();
-        // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
-        if (inputFrame == null || (inputFrame.Direct3DSurface == null && inputFrame.SoftwareBitmap == null))
-        {
-            UnityEngine.Debug.Log("Frame thrown out");
-            return result;
-        }
-        
+      
         try{
 
             // Perform network model inference using the input data tensor, cache output and time operation
-            result = await EvaluateFrame(inputFrame);
-
+            result = await EvaluateFrame(bitmap);
 
         return result;
         }
@@ -84,19 +77,11 @@ public class NetworkModel
 
     }
 
-   private async Task<DetectedFaces> EvaluateFrame(VideoFrame frame)
+   private async Task<DetectedFaces> EvaluateFrame(SoftwareBitmap bitmap)
    {
-            SoftwareBitmap bitmap;
 			if (detector == null)
             {
                 detector = await FaceDetector.CreateAsync();
-            }
-            if (frame.Direct3DSurface != null && frame.SoftwareBitmap == null)
-            {
-                bitmap  = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Direct3DSurface);
-            }
-            else{
-                bitmap = frame.SoftwareBitmap;
             }
 
 			const BitmapPixelFormat faceDetectionPixelFormat = BitmapPixelFormat.Nv12;
@@ -114,8 +99,6 @@ public class NetworkModel
             return new DetectedFaces
 			{
                 originalImageBitmap = bitmap,
-			    FrameWidth = convertedBitmap.PixelWidth,
-			    FrameHeight = convertedBitmap.PixelHeight,
 			    Faces = detectedFaces.Select(f => 
 			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
 			};

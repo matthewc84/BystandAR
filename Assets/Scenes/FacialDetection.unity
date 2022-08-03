@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
   quad: {fileID: 834558299}
-  samplingInterval: 60
+  samplingInterval: 45
 --- !u!4 &648552315
 Transform:
   m_ObjectHideFlags: 0
