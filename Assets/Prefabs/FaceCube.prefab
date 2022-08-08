@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: -2716397250255789392}
   - component: {fileID: 1049955043121567873}
   m_Layer: 0
-  m_Name: ObjectCube
+  m_Name: FaceCube
   m_TagString: BoundingBox
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,7 +131,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   framesEyeContactMade: 0
   toObscure: 1
-  timeSinceInitialization: 0
 --- !u!114 &-2716397250255789392
 MonoBehaviour:
   m_ObjectHideFlags: 0

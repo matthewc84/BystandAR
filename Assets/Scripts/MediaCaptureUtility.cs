@@ -39,9 +39,7 @@ public class MediaCaptureUtility
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _mediaCapture;
     private MediaFrameReader _mediaFrameReader;
-    private Frame _videoFrame;
-    //private SpatialCoordinateSystem spatialCoordinateSystem;
-    //public VideoFrame latestFrame;
+    private Frame _videoFrame = null;
 
 
     /// <summary>
@@ -63,16 +61,24 @@ public class MediaCaptureUtility
             // Find right camera settings and prefer back camera
             MediaCaptureInitializationSettings settings = new MediaCaptureInitializationSettings();
             var allCameras = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-            //Debug.Log($"InitializeMediaFrameReaderAsync: allCameras: {allCameras}");
+            var allMics = await DeviceInformation.FindAllAsync(DeviceClass.AudioCapture);
 
             var selectedCamera = allCameras.FirstOrDefault(c => c.EnclosureLocation?.Panel == Panel.Back) ?? allCameras.FirstOrDefault();
+            var selectedMic = allMics.FirstOrDefault();
             //Debug.Log($"InitializeMediaFrameReaderAsync: selectedCamera: {selectedCamera}");
-
+            Debug.Log($"InitializeMediaFrameReaderAsync: selectedMic: {selectedMic}");
 
             if (selectedCamera != null)
             {
                 settings.VideoDeviceId = selectedCamera.Id;
                 //Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
+
+            }
+
+            if (selectedMic != null)
+            {
+                settings.AudioDeviceId = selectedMic.Id;
+                //Debug.Log($"InitializeMediaFrameReaderAsync: settings.AudioDeviceId: {settings.AudioDeviceId}");
 
             }
 
@@ -84,7 +90,7 @@ public class MediaCaptureUtility
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully initialized media capture object.");
 
             var frameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
-            Debug.Log($"InitializeMediaFrameReaderAsync: frameSourcePair: {frameSourcePair}.");
+            //Debug.Log($"InitializeMediaFrameReaderAsync: frameSourcePair: {frameSourcePair}.");
 
             // Convert the pixel formats
             var subtype = MediaEncodingSubtypes.Bgra8;
@@ -120,7 +126,7 @@ public class MediaCaptureUtility
              // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
             if (videoFrame == null || (videoFrame.Direct3DSurface == null && videoFrame.SoftwareBitmap == null))
             {
-                UnityEngine.Debug.Log("Frame thrown out");
+                //UnityEngine.Debug.Log("Frame thrown out");
                 return _videoFrame;
             }
 

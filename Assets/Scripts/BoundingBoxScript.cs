@@ -12,7 +12,6 @@ public class BoundingBoxScript : MonoBehaviour
     public Rect box;
     public bool toObscure = true;
     private float initializationTime;
-    public float timeSinceInitialization;
     private bool colorSet = false;
 
     void Start()
@@ -33,21 +32,17 @@ public class BoundingBoxScript : MonoBehaviour
     {
         counter += 1;
         //If object has existed for more than the given threshold without update, we treat it as stale and remove
-        if (counter > 60)
+        if (counter > 30)
         {
             RemoveDetection();
         }
 
-        if(framesEyeContactMade > 10 && !colorSet )
+        if(framesEyeContactMade > 10 && !colorSet)
         {
             this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             toObscure = false;
             colorSet = true;
         }
-
-        //timeSinceInitialization = Time.realtimeSinceStartup - initializationTime;
-
-
     }
 
     public void EyeContactMade()
@@ -55,6 +50,7 @@ public class BoundingBoxScript : MonoBehaviour
 
         framesEyeContactMade += 1;
     }
+
 
     //If this gameobject is in the same physical space another bounding box, we compare the time they have existed and remove the younger one
     //This allows for tracking the amount of eye contact over multiple detections.
