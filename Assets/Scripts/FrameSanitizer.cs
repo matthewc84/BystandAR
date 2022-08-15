@@ -60,9 +60,10 @@ public class FrameSanitizer : MonoBehaviour
 {
     // Public fields
     public GameObject objectOutlineCube;
-    public GameObject quad;
+    public GameObject imagePreviewPlane;
     public GameObject longDepthPreviewPlane;
     public int samplingInterval;
+    public GameObject clientSocket;
 
     // Private fields
     private NetworkModel _networkModel;
@@ -71,14 +72,15 @@ public class FrameSanitizer : MonoBehaviour
     private byte[] depthData = null;
     byte[] sanitizedImageFrameByteArray = null;
     byte[] sanitizedDepthFrameByteArray = null;
+    private Material imageMediaMaterial = null;
+    private Texture2D imageMediaTexture = null;
     private Material longDepthMediaMaterial = null;
     private Texture2D longDepthMediaTexture = null;
 
 
+
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
-    Renderer quadRenderer;
-    Renderer depthQuadRenderer;
     HL2ResearchMode researchMode;
     private Frame returnFrame;
 
@@ -87,7 +89,7 @@ public class FrameSanitizer : MonoBehaviour
     int counter;
     Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
     float averageFaceWidthInMeters = 0.15f;
-    float averageHumanHeightInMeters = 2.00f;
+    float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
 
     #region UnityMethods
 
@@ -127,7 +129,6 @@ public class FrameSanitizer : MonoBehaviour
         }
 
         worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
-        quadRenderer = quad.GetComponent<Renderer>() as Renderer;
 
         try
         {
@@ -147,12 +148,21 @@ public class FrameSanitizer : MonoBehaviour
                 longDepthMediaTexture = new Texture2D(320, 288, TextureFormat.Alpha8, false);
                 longDepthMediaMaterial.mainTexture = longDepthMediaTexture;
             }
+
+            if (imagePreviewPlane != null)
+            {
+                imageMediaMaterial = imagePreviewPlane.GetComponent<MeshRenderer>().material;
+                imageMediaTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+                imageMediaMaterial.mainTexture = imageMediaTexture;
+            }
         }
         catch (Exception ex)
         {
             Debug.Log("Error starting research mode:" + ex.Message);
 
         }
+
+
 #endif
     }
     private async void OnDestroy()
@@ -170,58 +180,58 @@ public class FrameSanitizer : MonoBehaviour
         counter += 1;
         if (_mediaCaptureUtility.IsCapturing)
         {
-
+            //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
             returnFrame = await _mediaCaptureUtility.GetLatestFrame();
-            depthData = RetreiveDepthFrame();
 
-            if (returnFrame != null)
-            {
-                byte[] sanitizedImageFrameByteArray = ObscureFacesInImage(returnFrame);
+                depthData = RetreiveDepthFrame();
 
-                if (depthData != null)
+                if (returnFrame != null)
                 {
-                    sanitizedDepthFrameByteArray = ObscureDepthInFrame(depthData, returnFrame);
-                    DisplayDepthOnQuad(sanitizedDepthFrameByteArray);
-                }
+                    sanitizedImageFrameByteArray = ObscureFacesInImage(returnFrame);
+                    //DisplayImageOnQuad(sanitizedImageFrameByteArray);
 
-                if (counter >= samplingInterval)
-                {
-                    counter = 0;
+                    //var audioBuffer = returnFrame.audioFrame.LockBuffer(0);
+                    //IMemoryBufferReference reference = audioBuffer.CreateReference();
+                    //Debug.Log(reference);
 
-                    Task thread = Task.Run(async () =>
+                    if (depthData != null)
                     {
-                        try
+                        sanitizedDepthFrameByteArray = ObscureDepthInFrame(depthData, returnFrame);
+                        //DisplayDepthOnQuad(sanitizedDepthFrameByteArray);
+                    }
+
+                    if (counter >= samplingInterval)
+                    {
+                        counter = 0;
+
+                        Task thread = Task.Run(async () =>
                         {
-                            // Get the prediction from the model
-                            var result = await _networkModel.EvaluateVideoFrameAsync(returnFrame.bitmap);
-                            //If faces exist in frame, identify in 3D
-                            if (result.Faces.Any())
+                            try
                             {
-                                UnityEngine.WSA.Application.InvokeOnAppThread(() =>
+                                // Get the prediction from the model
+                                var result = await _networkModel.EvaluateVideoFrameAsync(returnFrame.bitmap);
+                                //If faces exist in frame, identify in 3D
+                                if (result.Faces.Any())
                                 {
-                                    //Visualize the detections in 3D to create GameObejcts for eye gaze to interact with
-                                    RGBDetectionToWorldspace(result, returnFrame);
-                                }, true);
+                                    UnityEngine.WSA.Application.InvokeOnAppThread(() =>
+                                    {
+                                        //Visualize the detections in 3D to create GameObjects for eye gaze to interact with
+                                        RGBDetectionToWorldspace(result, returnFrame);
+                                    }, true);
+                                }
+
+                                //sanitizedImageFrameByteArray = ObscureFacesInImage(returnFrame);
+                                //var sendResult = await clientSocketScript.trySendSanitizedImage(sanitizedImageFrameByteArray);
+
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.Log("Exception:" + ex.Message);
                             }
 
-                            //sanitizedImageFrameByteArray = SanitizeImageFrame(returnFrame);
-
-                            UnityEngine.WSA.Application.InvokeOnAppThread(() =>
-                            {
-                                //Use the 3D bounding boxes to remove "bystanders" and keep "subjects"
-                                DisplayImageOnQuad(sanitizedImageFrameByteArray, result.originalImageBitmap.PixelWidth, result.originalImageBitmap.PixelHeight);
-                                
-                            }, true);
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.Log("Exception:" + ex.Message);
-                        }
-
-                    });
+                        });
+                    }
                 }
-            }
-
         }
 #endif
     }
@@ -255,20 +265,16 @@ public class FrameSanitizer : MonoBehaviour
             var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
             newObject.GetComponent<BoundingBoxScript>().box.X = face.X;
             newObject.GetComponent<BoundingBoxScript>().box.Y = face.Y;
-            newObject.GetComponent<BoundingBoxScript>().box.Width = (uint)(face.Width + face.Width * 0.1);
-            newObject.GetComponent<BoundingBoxScript>().box.Height = (uint)(face.Height + face.Height * 0.1);
+            newObject.GetComponent<BoundingBoxScript>().box.Width = (uint)(face.Width);
+            newObject.GetComponent<BoundingBoxScript>().box.Height = (uint)(face.Height);
         }
  
     }
 
-    private void DisplayImageOnQuad(byte[] imageBytes, int width, int height)
+    private void DisplayImageOnQuad(byte[] imageBytes)
     {
-        Texture2D photoTexture = new Texture2D(width, height);
-	    photoTexture.LoadRawTextureData(imageBytes);
-        photoTexture.Apply();
-
-        // Create a GameObject to which the texture can be applied
-        quadRenderer.material.SetTexture("_MainTex", photoTexture);
+        imageMediaTexture.LoadRawTextureData(imageBytes);
+        imageMediaTexture.Apply();
     }
 
     private void DisplayDepthOnQuad(byte[] longDepthFrameData)
@@ -307,9 +313,11 @@ public class FrameSanitizer : MonoBehaviour
 
         byte[] depthBytesWithoutBystanders = new byte[Buffer.ByteLength(depthFrame)];
         depthFrame.CopyTo(depthBytesWithoutBystanders,0);
-        var depthToImageWidthRatio = 320 / returnFrame.bitmap.PixelWidth;
-        var depthToImageHeightRatio = 288 / returnFrame.bitmap.PixelHeight;
+        //used to convert detection X,Y to depth frame X,Y
+        float depthToImageWidthRatio = 320.0F / (float)returnFrame.bitmap.PixelWidth;
+        float depthToImageHeightRatio = 288.0F / (float)returnFrame.bitmap.PixelHeight;
 
+        //for each detection GameObject, we convert the current 3D position to to 2D position of the current depth frame
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
@@ -326,14 +334,17 @@ public class FrameSanitizer : MonoBehaviour
                 Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
+                var faceToHeightConversion = (double)(tempbox.Height * depthToImageHeightRatio) - (tempbox.Height * averageHumanHeightToFaceRatio);
                 var xCoord = (double)(projected2DPoint.X * depthToImageWidthRatio) - ((double)(tempbox.Width * depthToImageWidthRatio) / 2.0F);
                 var yCoord = (double)(projected2DPoint.Y * depthToImageHeightRatio) - ((double)(tempbox.Height * depthToImageHeightRatio) / 2.0F);
+                //var yCoord = (double)((projected2DPoint.Y * depthToImageHeightRatio) / 2.0F) - faceToHeightConversion;
+                //yCoord = (yCoord < 0) ? yCoord = 0 : yCoord;
 
-                for (uint rows = (uint)yCoord; rows <= yCoord + (tempbox.Height * depthToImageHeightRatio); rows++)
+                for (uint rows = (uint)yCoord; rows < yCoord + (tempbox.Height * depthToImageHeightRatio); rows++)
                 {
                     for (uint columns = (uint)xCoord; columns < xCoord + (tempbox.Width * depthToImageWidthRatio); columns++)
                     {
-                        depthBytesWithoutBystanders[(rows * 320) + columns] = Byte.MinValue;
+                        depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoord];
                     }
                 }
             }
@@ -345,12 +356,10 @@ public class FrameSanitizer : MonoBehaviour
     private byte[] ObscureFacesInImage(Frame returnFrame)
     {
 
-        //byte[] imageBytes = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
-	    //returnFrame.bitmap.CopyToBuffer(imageBytes.AsBuffer());
 
         byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
-        //inputRawImage.CopyTo(imageBytesWithoutBystanders,0);
         returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
+        //for each detection GameObject, we convert the current 3D position to to 2D position of the current depth frame
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
@@ -365,12 +374,12 @@ public class FrameSanitizer : MonoBehaviour
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
                 Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
-                //Debug.Log(cameraSpaceCoordinate);
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
-                //Debug.Log(projected2DPoint);
 
                 var xCoord = (double)projected2DPoint.X - ((double)tempbox.Width / 2.0F);
+                //xCoord = (xCoord-20 > 0) ? xCoord -= 20 : xCoord;
                 var yCoord = (double)projected2DPoint.Y - ((double)tempbox.Height / 2.0F);
+                //yCoord = (yCoord-20 > 0) ? yCoord -= 20 : yCoord;
 
                 for (uint rows = (uint)yCoord; rows <= yCoord + tempbox.Height; rows++)
                 {

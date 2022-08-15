@@ -32,7 +32,7 @@ public class BoundingBoxScript : MonoBehaviour
     {
         counter += 1;
         //If object has existed for more than the given threshold without update, we treat it as stale and remove
-        if (counter > 30)
+        if (counter > 15)
         {
             RemoveDetection();
         }
@@ -61,11 +61,12 @@ public class BoundingBoxScript : MonoBehaviour
             //UnityEngine.Debug.Log("Collision");
             if (collision.gameObject.GetComponent<BoundingBoxScript>().initializationTime > this.initializationTime)
             {
-                counter = 0;
+                collision.gameObject.GetComponent<BoundingBoxScript>().framesEyeContactMade = this.framesEyeContactMade;
+                RemoveDetection();
             }
             else
             {
-               RemoveDetection();
+                counter = 0;
             }
         }
 

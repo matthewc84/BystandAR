@@ -23,11 +23,17 @@ using Windows.Perception.Spatial;
 //using System.Threading.Tasks;
 
 
-public class Frame
+public class Frame : IDisposable
 {
     public SpatialCoordinateSystem spatialCoordinateSystem;
     public CameraIntrinsics cameraIntrinsics;
     public SoftwareBitmap bitmap;
+
+    public void Dispose()
+    {
+        bitmap.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
 }
 #endif
@@ -38,7 +44,7 @@ public class MediaCaptureUtility
 
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _mediaCapture;
-    private MediaFrameReader _mediaFrameReader;
+    private MediaFrameReader _imageMediaFrameReader;
     private Frame _videoFrame = null;
 
 
@@ -61,24 +67,12 @@ public class MediaCaptureUtility
             // Find right camera settings and prefer back camera
             MediaCaptureInitializationSettings settings = new MediaCaptureInitializationSettings();
             var allCameras = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-            var allMics = await DeviceInformation.FindAllAsync(DeviceClass.AudioCapture);
-
             var selectedCamera = allCameras.FirstOrDefault(c => c.EnclosureLocation?.Panel == Panel.Back) ?? allCameras.FirstOrDefault();
-            var selectedMic = allMics.FirstOrDefault();
-            //Debug.Log($"InitializeMediaFrameReaderAsync: selectedCamera: {selectedCamera}");
-            Debug.Log($"InitializeMediaFrameReaderAsync: selectedMic: {selectedMic}");
 
             if (selectedCamera != null)
             {
                 settings.VideoDeviceId = selectedCamera.Id;
                 //Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
-
-            }
-
-            if (selectedMic != null)
-            {
-                settings.AudioDeviceId = selectedMic.Id;
-                //Debug.Log($"InitializeMediaFrameReaderAsync: settings.AudioDeviceId: {settings.AudioDeviceId}");
 
             }
 
@@ -89,8 +83,7 @@ public class MediaCaptureUtility
             await _mediaCapture.InitializeAsync(settings);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully initialized media capture object.");
 
-            var frameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
-            //Debug.Log($"InitializeMediaFrameReaderAsync: frameSourcePair: {frameSourcePair}.");
+            var imageFrameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
 
             // Convert the pixel formats
             var subtype = MediaEncodingSubtypes.Bgra8;
@@ -98,11 +91,11 @@ public class MediaCaptureUtility
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
-            _mediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSourcePair.Value, subtype, outputSize);
+            _imageMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(imageFrameSourcePair.Value, subtype, outputSize);
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media frame reader.");
-            _mediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
+            _imageMediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
 
-            await _mediaFrameReader.StartAsync();
+            await _imageMediaFrameReader.StartAsync();
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully started media frame reader.");
 
             IsCapturing = true;
@@ -118,10 +111,10 @@ public class MediaCaptureUtility
         SoftwareBitmap bitmap;
         try{
             // The overloads of CreateFrameReaderAsync with the format arguments will actually return a copy so we don't have to copy again
-            var mediaFrameReference = _mediaFrameReader.TryAcquireLatestFrame();
-            VideoFrame videoFrame = mediaFrameReference?.VideoMediaFrame?.GetVideoFrame();
-            var spatialCoordinateSystem = mediaFrameReference?.CoordinateSystem;
-            var cameraIntrinsics = mediaFrameReference?.VideoMediaFrame?.CameraIntrinsics;
+            var imageMediaFrameReference = _imageMediaFrameReader.TryAcquireLatestFrame();
+            VideoFrame videoFrame = imageMediaFrameReference?.VideoMediaFrame?.GetVideoFrame();
+            var spatialCoordinateSystem = imageMediaFrameReference?.CoordinateSystem;
+            var cameraIntrinsics = imageMediaFrameReference?.VideoMediaFrame?.CameraIntrinsics;
 
              // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
             if (videoFrame == null || (videoFrame.Direct3DSurface == null && videoFrame.SoftwareBitmap == null))
@@ -139,11 +132,14 @@ public class MediaCaptureUtility
             {
                 bitmap = videoFrame.SoftwareBitmap;
             }
-            return new Frame{
+
+            Frame returnFrame = new Frame{
                 spatialCoordinateSystem = spatialCoordinateSystem,
                 cameraIntrinsics = cameraIntrinsics,
-                bitmap = bitmap
+                bitmap = bitmap,
                 };
+
+            return returnFrame;
         }
         catch (Exception ex){
         Debug.Log("Caught exception grabbing frame");
@@ -163,8 +159,8 @@ public class MediaCaptureUtility
 #if ENABLE_WINMD_SUPPORT
         if (_mediaCapture != null && _mediaCapture.CameraStreamState != CameraStreamState.Shutdown)
         {
-            await _mediaFrameReader.StopAsync();
-            _mediaFrameReader.Dispose();
+            await _imageMediaFrameReader.StopAsync();
+            _imageMediaFrameReader.Dispose();
             _mediaCapture.Dispose();
             _mediaCapture = null;
         }
