@@ -72,6 +72,7 @@ public class MediaCaptureUtility
             if (selectedCamera != null)
             {
                 settings.VideoDeviceId = selectedCamera.Id;
+                //settings.MemoryPreference = MediaCaptureMemoryPreference.Auto;
                 //Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
 
             }
@@ -86,8 +87,8 @@ public class MediaCaptureUtility
             var imageFrameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
 
             // Convert the pixel formats
-            var subtype = MediaEncodingSubtypes.Bgra8;
-            //var subtype = MediaEncodingSubtypes.Rgb32;
+            //var subtype = MediaEncodingSubtypes.Bgra8;
+            var subtype = MediaEncodingSubtypes.Rgb32;
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
@@ -117,7 +118,7 @@ public class MediaCaptureUtility
             var cameraIntrinsics = imageMediaFrameReference?.VideoMediaFrame?.CameraIntrinsics;
 
              // Sometimes on HL RS4 the D3D surface returned is null, so simply skip those frames
-            if (videoFrame == null || (videoFrame.Direct3DSurface == null && videoFrame.SoftwareBitmap == null))
+            if (videoFrame == null || cameraIntrinsics == null || spatialCoordinateSystem == null || (videoFrame.Direct3DSurface == null && videoFrame.SoftwareBitmap == null))
             {
                 //UnityEngine.Debug.Log("Frame thrown out");
                 return _videoFrame;
@@ -130,13 +131,16 @@ public class MediaCaptureUtility
             }
             else
             {
-                bitmap = videoFrame.SoftwareBitmap;
+                bitmap = SoftwareBitmap.Copy(videoFrame.SoftwareBitmap);
             }
+
+            videoFrame.Dispose();
+            imageMediaFrameReference.Dispose();
 
             Frame returnFrame = new Frame{
                 spatialCoordinateSystem = spatialCoordinateSystem,
                 cameraIntrinsics = cameraIntrinsics,
-                bitmap = bitmap,
+                bitmap = bitmap
                 };
 
             return returnFrame;

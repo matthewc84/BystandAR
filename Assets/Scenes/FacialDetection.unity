@@ -155,7 +155,7 @@ MonoBehaviour:
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
   imagePreviewPlane: {fileID: 834558299}
   longDepthPreviewPlane: {fileID: 2010916211}
-  samplingInterval: 7
+  samplingInterval: 10
   clientSocket: {fileID: 1243922883}
 --- !u!4 &648552315
 Transform:

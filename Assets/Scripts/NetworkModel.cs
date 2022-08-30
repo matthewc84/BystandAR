@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Diagnostics;
 
 #if ENABLE_WINMD_SUPPORT
 using Windows.AI.MachineLearning;
@@ -23,39 +24,79 @@ using Windows.Graphics.Imaging;
 using Windows.Foundation;
 using Windows.Media.FaceAnalysis;
 
-
-
-public struct DetectedFaces
+public class CustomModelOutput
 {
-    public SoftwareBitmap originalImageBitmap { get; set; }
-    public int FrameWidth { get; set; }
-    public int FrameHeight { get; set; }
+    public DetectedFaces returnFaces { get; set; }
+    public Frame returnFrame { get; set; }
+}
+
+public class DetectedFaces
+{
     public Rect[] Faces { get; set; }
 }
 
 #endif
 
-public struct Rect
+public class Rect
 {
-    public uint X { get; set; }
-    public uint Y { get; set; }
-    public uint Width { get; set; }
-    public uint Height { get; set; }
+    public float X { get; set; }
+    public float Y { get; set; }
+    public float Width { get; set; }
+    public float Height { get; set; }
 }
 
-public class NetworkModel
+public class NetworkModel : MonoBehaviour
 {
 
 #if ENABLE_WINMD_SUPPORT
-    private MediaCapture _media_capture;
     FaceDetector detector;
-    IList<DetectedFace> detectedFaces;
-
+    public Queue<Frame> modelInput;
+    public Queue<CustomModelOutput> modelOutput;
 #endif
 
+    public void Awake()
+    {
+#if ENABLE_WINMD_SUPPORT
+        modelInput = new Queue<Frame>();
+        modelOutput = new Queue<CustomModelOutput>();
+       
+#endif
+    }
+
+    public async void Start()
+    {
+#if ENABLE_WINMD_SUPPORT
+
+#endif
+    }
+
+    async void Update()
+    {
+#if ENABLE_WINMD_SUPPORT
+
+#endif
+    }
 
 
 #if ENABLE_WINMD_SUPPORT
+
+    public void AddToInputQueue(Frame inputFrame)
+    {
+        modelInput.Enqueue(inputFrame);
+    }
+
+    public CustomModelOutput RemoveFromOutputQueue()
+    {
+        var tempOutput = modelOutput.Dequeue();
+        return tempOutput;
+    }
+
+    public int GetOutputCount()
+    {
+        return modelOutput.Count;
+    }
+
+
 
     public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)
     {
@@ -66,7 +107,7 @@ public class NetworkModel
             // Perform network model inference using the input data tensor, cache output and time operation
             result = await EvaluateFrame(bitmap);
 
-        return result;
+            return result;
         }
 
          catch (Exception ex)
@@ -84,7 +125,8 @@ public class NetworkModel
                 detector = await FaceDetector.CreateAsync();
             }
 
-			const BitmapPixelFormat faceDetectionPixelFormat = BitmapPixelFormat.Nv12;
+            var allFormats = FaceDetector.GetSupportedBitmapPixelFormats();
+			BitmapPixelFormat faceDetectionPixelFormat = allFormats.FirstOrDefault();
             SoftwareBitmap convertedBitmap;
             if (bitmap.BitmapPixelFormat != faceDetectionPixelFormat)
             {
@@ -94,11 +136,15 @@ public class NetworkModel
             {
                 convertedBitmap = bitmap;
             }
-			detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
-       
+
+            //var stopwatch = Stopwatch.StartNew();
+			var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+            //stopwatch.Stop();
+
+            //UnityEngine.Debug.Log($"Elapsed time for inference (in ms): {stopwatch.ElapsedMilliseconds.ToString("F4")}");
+
             return new DetectedFaces
 			{
-                originalImageBitmap = bitmap,
 			    Faces = detectedFaces.Select(f => 
 			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
 			};
