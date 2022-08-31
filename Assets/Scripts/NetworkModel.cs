@@ -50,15 +50,12 @@ public class NetworkModel : MonoBehaviour
 
 #if ENABLE_WINMD_SUPPORT
     FaceDetector detector;
-    public Queue<Frame> modelInput;
-    public Queue<CustomModelOutput> modelOutput;
 #endif
 
     public void Awake()
     {
 #if ENABLE_WINMD_SUPPORT
-        modelInput = new Queue<Frame>();
-        modelOutput = new Queue<CustomModelOutput>();
+
        
 #endif
     }
@@ -79,23 +76,6 @@ public class NetworkModel : MonoBehaviour
 
 
 #if ENABLE_WINMD_SUPPORT
-
-    public void AddToInputQueue(Frame inputFrame)
-    {
-        modelInput.Enqueue(inputFrame);
-    }
-
-    public CustomModelOutput RemoveFromOutputQueue()
-    {
-        var tempOutput = modelOutput.Dequeue();
-        return tempOutput;
-    }
-
-    public int GetOutputCount()
-    {
-        return modelOutput.Count;
-    }
-
 
 
     public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)

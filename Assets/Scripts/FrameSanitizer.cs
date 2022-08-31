@@ -59,7 +59,7 @@ public static class NumericsConversionExtensions
 public class SanitizedFrames
 {
     public byte[] sanitizedDepthFrame { get; set; }
-    public byte[] sanitizedImageFrame { get; set; }
+    public Texture2D sanitizedImageFrame { get; set; }
 
 }
 
@@ -83,7 +83,7 @@ public class FrameSanitizer : MonoBehaviour
     private Texture2D imageMediaTexture = null;
     private Material longDepthMediaMaterial = null;
     private Texture2D longDepthMediaTexture = null;
-
+    private Texture2D tempImageTexture;
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -110,6 +110,7 @@ public class FrameSanitizer : MonoBehaviour
         eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
         counter = samplingInterval;
         StartCoroutine(FramerateCountLoop());
+        tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -173,7 +174,7 @@ public class FrameSanitizer : MonoBehaviour
 
 
 #endif
-    }
+}
     private async void OnDestroy()
     {
         _isRunning = false;
@@ -204,10 +205,10 @@ public class FrameSanitizer : MonoBehaviour
 
                 if (sanitizedFrame.sanitizedDepthFrame != null)
                 {
-                    //DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
+                    DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
                 }
 
-                //DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
+                DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
 
                 if (counter >= samplingInterval)
                 {
@@ -227,7 +228,7 @@ public class FrameSanitizer : MonoBehaviour
                                 {
                                     //Visualize the detections in 3D to create GameObejcts for eye gaze to interact with
                                     RGBDetectionToWorldspace(result, returnFrame);
-                                }, true);
+                                }, false);
                             }
 
                             //returnFrame.Dispose();
@@ -311,6 +312,7 @@ public class FrameSanitizer : MonoBehaviour
         byte[] depthBytesWithoutBystanders = null;
         byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
         returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
+        tempImageTexture.LoadRawTextureData(imageBytesWithoutBystanders);
 
         if(depthFrame != null)
         {
@@ -329,12 +331,10 @@ public class FrameSanitizer : MonoBehaviour
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
-            Vector3 reletiveNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
-            float dot = Vector3.Dot(reletiveNormalizedPos, Camera.main.transform.forward);
+            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            Collider objCollider =  face.GetComponent<Collider>();
 
-            //angle difference between looking direction and direction to item (radians), if larger than HL2 RGB FOV, don't attempt to obscure
-            float angle = Mathf.Acos(dot);
-            if (boundingBoxScript.toObscure && angle < 0.60F)
+            if (boundingBoxScript.toObscure && GeometryUtility.TestPlanesAABB(planes, objCollider.bounds))
             {
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
@@ -342,41 +342,54 @@ public class FrameSanitizer : MonoBehaviour
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
                     var xCoordDepth = (float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F);
-                    var yCoordDepth = (float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F);
-                    var scaledDepthHeight = Mathf.Min(yCoordDepth + ((boundingBoxScript.bboxHeight * depthToImageHeightRatio) + 80), 288f);
+                    var yCoordDepth = (float)(projected2DPoint.Y * depthToImageHeightRatio) + (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F);
+                    var scaledDepthHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio), 288f);
                     var scaledDepthWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageHeightRatio), 320f);
+
+                    float scaledImageHeight;
+                    float scaledImageWidth;
                     var xCoordImage = (float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F);
                     var yCoordImage = (float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F);
-                    var scaledImageHeight = Mathf.Min(yCoordImage + boundingBoxScript.bboxHeight, 720f);
-                    var scaledImageWidth = Mathf.Min(xCoordImage + boundingBoxScript.bboxWidth, 1280f);
+
+                    if((xCoordImage + boundingBoxScript.bboxWidth) > 1280f)
+                    {
+                        scaledImageWidth = boundingBoxScript.bboxWidth - (xCoordImage + boundingBoxScript.bboxWidth - 1280f);
+                    }
+                    else
+                    {
+                        scaledImageWidth = boundingBoxScript.bboxWidth;
+                    }
+
+                    if((yCoordImage + boundingBoxScript.bboxHeight) > 720f)
+                    {
+                        scaledImageHeight = boundingBoxScript.bboxHeight - (yCoordImage + boundingBoxScript.bboxHeight - 720f);
+                    }
+                    else
+                    {
+                        scaledImageHeight = boundingBoxScript.bboxHeight;
+                    }
 
                 if(depthFrame != null)
                 {
 
-                    //for (uint rows = (uint)yCoordDepth; rows < scaledDepthHeight; rows++)
-                    //{
-                    //for (uint columns = (uint)xCoordDepth; columns < scaledDepthWidth; columns++)
-                    //{
-                    //   depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
-                    //}
-                    //}
-
+                    for (uint rows = (uint)yCoordDepth; rows < scaledDepthHeight; rows++)
+                    {
+                        for (uint columns = (uint)xCoordDepth; columns < scaledDepthWidth; columns++)
+                        {
+                            depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
+                        }
+                    }
 
                 }
 
-                //for (uint rows = (uint)yCoordImage; rows < scaledImageHeight; rows++)
-                //{
-                // for (uint columns = (uint)xCoordImage; columns < scaledImageWidth; columns++)
-                // {
-                //   imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4] = Byte.MaxValue;
-                //   imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4 + 1] = Byte.MaxValue;
-                //   imageBytesWithoutBystanders[(rows * returnFrame.bitmap.PixelWidth * 4) + columns * 4 + 2] = Byte.MaxValue;
-                //}
-                //}
+
+                Color[] colors = new Color[(int)scaledImageWidth * (int)scaledImageHeight];
+                tempImageTexture.SetPixels((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
+
             }
         }
 
-        tempSanitizedFrames.sanitizedImageFrame = imageBytesWithoutBystanders;
+        tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
         tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
         return tempSanitizedFrames;
     }
@@ -391,9 +404,9 @@ public class FrameSanitizer : MonoBehaviour
         }
     }
 
-    private void DisplayImageOnQuad(byte[] imageBytes)
+    private void DisplayImageOnQuad(Texture2D inputImage)
     {
-        imageMediaTexture.LoadRawTextureData(imageBytes);
+        Graphics.CopyTexture(inputImage, imageMediaTexture);
         imageMediaTexture.Apply();
     }
 
