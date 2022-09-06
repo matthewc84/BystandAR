@@ -28,23 +28,18 @@ public class SocketClient : MonoBehaviour
 {
 
 #if !UNITY_EDITOR
-
+    StreamSocket socket;
+    HostName serverHost;
+    Stream dataWriter;
+    public Queue<byte[]> inputFrames = new Queue<byte[]>();
 #endif
+
     // Use this for initialization
-    void Start()
+    async void Start()
     {
 #if !UNITY_EDITOR
-        //socket.Control.KeepAlive = true;
-#endif
-    }
-
-
-#if !UNITY_EDITOR
-
-    public async Task<bool> trySendSanitizedImage(byte[] image)
-    {
-        StreamSocket socket = new Windows.Networking.Sockets.StreamSocket();
-        HostName serverHost = new HostName("192.168.0.40");
+        socket = new Windows.Networking.Sockets.StreamSocket();
+        serverHost = new HostName("192.168.0.40");
         String port = "65432";
         try
         {
@@ -63,33 +58,54 @@ public class SocketClient : MonoBehaviour
             }
         }
 
+        dataWriter = socket.OutputStream.AsStreamForWrite();
+#endif
+    }
+
+    async void Update()
+    {
+#if !UNITY_EDITOR
+        if(inputFrames.Count > 0)
+        {
+            try
+            {
+
+                StartCoroutine(trySendSanitizedImage(inputFrames.Dequeue()));
+
+            }
+            catch (Exception exception)
+            {
+
+            }
+        }
+
+#endif
+    }
+
+
+#if !UNITY_EDITOR
+
+    IEnumerator trySendSanitizedImage(byte[] image)
+    {
         try
         {
-            using (Stream dataWriter = socket.OutputStream.AsStreamForWrite())
-            {
-                await Task.WhenAll(dataWriter.WriteAsync(image, 0, image.Length), dataWriter.FlushAsync());
-            }
-            socket.Dispose();
-            Debug.Log("Image Frame sent to Server");
+            byte[] imageLength = BitConverter.GetBytes(image.Length);
+            //Debug.Log("Sending picture of size " + image.Length);
+            dataWriter.WriteAsync(imageLength, 0, imageLength.Length);
 
-            return true;
+            dataWriter.WriteAsync(image, 0, image.Length);
+            dataWriter.FlushAsync();
 
         }
         catch (Exception ex)
         {
             Debug.Log("Failed to send Image Frame to Server");
             Debug.Log(ex);
-            return false;
             throw;
         }
-
+        yield return null;
     }
 
 #endif
 
-
-    void Update()
-    {
-
-    }
 }

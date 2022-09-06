@@ -157,6 +157,7 @@ MonoBehaviour:
   longDepthPreviewPlane: {fileID: 2010916211}
   samplingInterval: 10
   clientSocket: {fileID: 1243922883}
+  OffLoadSanitizedFramesToServer: 1
 --- !u!4 &648552315
 Transform:
   m_ObjectHideFlags: 0
@@ -674,7 +675,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1243922884
 MonoBehaviour:
   m_ObjectHideFlags: 0

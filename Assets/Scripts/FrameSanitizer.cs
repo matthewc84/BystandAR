@@ -34,6 +34,7 @@ using HL2UnityPlugin;
 
 #endif
 
+#region ConversionExtension
 //https://docs.microsoft.com/en-us/windows/mixed-reality/develop/unity/unity-xrdevice-advanced?tabs=mrtk
 public static class NumericsConversionExtensions
 {
@@ -56,6 +57,8 @@ public static class NumericsConversionExtensions
     public static System.Numerics.Vector3 ToSystemWithoutConversion(UnityEngine.Vector3 vector) => new System.Numerics.Vector3(vector.x, vector.y, vector.z);
 }
 
+#endregion
+
 public class SanitizedFrames
 {
     public byte[] sanitizedDepthFrame { get; set; }
@@ -71,6 +74,7 @@ public class FrameSanitizer : MonoBehaviour
     public GameObject longDepthPreviewPlane;
     public int samplingInterval;
     public GameObject clientSocket;
+    public bool OffLoadSanitizedFramesToServer;
 
     // Private fields
     private NetworkModel _networkModel;
@@ -89,7 +93,6 @@ public class FrameSanitizer : MonoBehaviour
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
-    //private Frame returnFrame;
 
 #endif
 
@@ -115,7 +118,6 @@ public class FrameSanitizer : MonoBehaviour
 #if ENABLE_WINMD_SUPPORT
         try
         {
-            //_networkModel = networkModel.GetComponent<NetworkModel>();
             _networkModel = new NetworkModel();
         }
         catch (Exception ex)
@@ -131,7 +133,7 @@ public class FrameSanitizer : MonoBehaviour
                 _mediaCaptureUtility = new MediaCaptureUtility();
                 await _mediaCaptureUtility.InitializeMediaFrameReaderAsync();
                 //Debug.Log("Camera started. Running!");
-                Debug.Log("Successfully initialized frame reader.");
+                //Debug.Log("Successfully initialized frame reader.");
         }
         catch (Exception ex)
         {
@@ -190,7 +192,7 @@ public class FrameSanitizer : MonoBehaviour
         counter += 1;
         if (_mediaCaptureUtility.IsCapturing)
         {
-            //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
+            var clientSocketScript = clientSocket.GetComponent<SocketClient>();
             var returnFrame = await _mediaCaptureUtility.GetLatestFrame();
 
             depthData = RetreiveDepthFrame();
@@ -198,6 +200,12 @@ public class FrameSanitizer : MonoBehaviour
             if (returnFrame != null)
             {
                 var sanitizedFrame = await SanitizeFrame(returnFrame, depthData);
+
+                if(OffLoadSanitizedFramesToServer)
+                {
+                    clientSocketScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToPNG());
+
+                }
 
                 //var audioBuffer = returnFrame.audioFrame.LockBuffer(0);
                 //IMemoryBufferReference reference = audioBuffer.CreateReference();
