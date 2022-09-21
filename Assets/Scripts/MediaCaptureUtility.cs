@@ -17,10 +17,8 @@ using Windows.Media.MediaProperties;
 using Windows.Media.Devices;
 using Windows.Graphics.Imaging;
 using Windows.Devices.Enumeration;
-//using Windows.Storage;
 using Windows.System;
 using Windows.Perception.Spatial;
-//using System.Threading.Tasks;
 
 
 public class Frame : IDisposable

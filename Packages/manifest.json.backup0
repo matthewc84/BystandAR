@@ -11,6 +11,7 @@
     "com.microsoft.mixedreality.toolkit.figmabridge": "file:MixedReality/com.microsoft.mixedreality.toolkit.figmabridge-0.1.1.tgz",
     "com.microsoft.mixedreality.toolkit.foundation": "file:MixedReality/com.microsoft.mixedreality.toolkit.foundation-2.8.2.tgz",
     "com.microsoft.mixedreality.toolkit.gpustats": "file:MixedReality/com.microsoft.mixedreality.toolkit.gpustats-1.0.3.tgz",
+    "com.microsoft.mixedreality.toolkit.micstream": "file:MixedReality/com.microsoft.mixedreality.toolkit.micstream-1.0.0.tgz",
     "com.microsoft.mixedreality.toolkit.planefinding": "file:MixedReality/com.microsoft.mixedreality.toolkit.planefinding-1.0.0.tgz",
     "com.microsoft.mixedreality.toolkit.standardassets": "file:MixedReality/com.microsoft.mixedreality.toolkit.standardassets-2.8.2.tgz",
     "com.microsoft.mixedreality.toolkit.testutilities": "file:MixedReality/com.microsoft.mixedreality.toolkit.testutilities-2.8.2.tgz",

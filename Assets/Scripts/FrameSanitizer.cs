@@ -75,13 +75,14 @@ public class FrameSanitizer : MonoBehaviour
     public int samplingInterval;
     public GameObject clientSocket;
     public bool OffLoadSanitizedFramesToServer;
+    
 
     // Private fields
     private NetworkModel _networkModel;
     private MediaCaptureUtility _mediaCaptureUtility;
     private bool _isRunning = false;
     private byte[] depthData = null;
-    byte[] sanitizedImageFrameByteArray = null;
+    //byte[] sanitizedImageFrameByteArray = null;
     byte[] sanitizedDepthFrameByteArray = null;
     private Material imageMediaMaterial = null;
     private Texture2D imageMediaTexture = null;
@@ -103,16 +104,12 @@ public class FrameSanitizer : MonoBehaviour
 
     #region UnityMethods
 
-    private void Awake()
-    {
-
-    }
-
     async void Start()
     {
         eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
         counter = samplingInterval;
         StartCoroutine(FramerateCountLoop());
+        //create temp texture to apply SoftwareBitmap to, in order to sanitize
         tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
 
 #if ENABLE_WINMD_SUPPORT
@@ -123,7 +120,6 @@ public class FrameSanitizer : MonoBehaviour
         catch (Exception ex)
         {
             Debug.Log("Error initializing inference model:" + ex.Message);
-            Debug.Log($"Failed to start model inference: {ex}");
         }
 
         // Configure camera to return frames fitting the model input size
@@ -176,7 +172,7 @@ public class FrameSanitizer : MonoBehaviour
 
 
 #endif
-}
+    }
     private async void OnDestroy()
     {
         _isRunning = false;
@@ -190,6 +186,7 @@ public class FrameSanitizer : MonoBehaviour
     {
 #if ENABLE_WINMD_SUPPORT
         counter += 1;
+
         if (_mediaCaptureUtility.IsCapturing)
         {
             var clientSocketScript = clientSocket.GetComponent<SocketClient>();
@@ -207,10 +204,7 @@ public class FrameSanitizer : MonoBehaviour
 
                 }
 
-                //var audioBuffer = returnFrame.audioFrame.LockBuffer(0);
-                //IMemoryBufferReference reference = audioBuffer.CreateReference();
-                //Debug.Log(reference);
-
+                
                 if (sanitizedFrame.sanitizedDepthFrame != null)
                 {
                     DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
@@ -238,8 +232,6 @@ public class FrameSanitizer : MonoBehaviour
                                     RGBDetectionToWorldspace(result, returnFrame);
                                 }, false);
                             }
-
-                            //returnFrame.Dispose();
 
                         }
                         catch (Exception ex)
