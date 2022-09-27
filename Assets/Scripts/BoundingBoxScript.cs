@@ -34,14 +34,14 @@ public class BoundingBoxScript : MonoBehaviour
     {
         counter += 1;
         //If object has existed for more than the given threshold without update, we treat it as stale and remove
-        if (counter > 60)
+        if (counter > 45)
         {
             RemoveDetection();
         }
 
         if(framesEyeContactMade > 30 && !colorSet)
         {
-            this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+            //this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             toObscure = false;
             colorSet = true;
         }

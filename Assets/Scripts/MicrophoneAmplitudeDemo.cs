@@ -1,12 +1,12 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.MixedReality.Toolkit.Audio;
-using Microsoft.MixedReality.Toolkit.SpatialAwareness;
 using UnityEngine;
-using TMPro;
+using Microsoft.MixedReality.Toolkit.SpatialAwareness;
 
-namespace Microsoft.MixedReality.Toolkit.Examples
+//namespace Microsoft.MixedReality.Toolkit.Examples
+//{
+namespace Microsoft.MixedReality.Toolkit.Audio
 {
     /// <summary>
     /// Demonstration class using WindowsMicrophoneStream (from com.microsoft.mixedreality.toolkit.micstream) to select the 
@@ -15,7 +15,7 @@ namespace Microsoft.MixedReality.Toolkit.Examples
     [RequireComponent(typeof(AudioSource))]
     public class MicrophoneAmplitudeDemo : MonoBehaviour
     {
-        // #if MICSTREAM_PRESENT
+//#if MICSTREAM_PRESENT
 
         [SerializeField]
         [Tooltip("Gain to apply to the microphone input.")]
@@ -27,12 +27,6 @@ namespace Microsoft.MixedReality.Toolkit.Examples
         [Range(0, 50)]
         private int amplitudeBoostFactor = 10;
 
-        [SerializeField]
-        [Tooltip("Color to use for the wireframe mesh. It is recommended to use a color with an alpha of 255.")]
-        private Color meshColor = Color.blue;
-
-        private IMixedRealitySpatialAwarenessMeshObserver spatialMeshObserver = null;
-        private Material visibleMaterial = null;
 
         /// <summary>
         /// Class providing microphone stream management support on Microsoft Windows based devices.
@@ -44,28 +38,11 @@ namespace Microsoft.MixedReality.Toolkit.Examples
         /// </summary>
         private float averageAmplitude = 0.0f;
 
-        /// <summary>
-        /// Cached material values used to restore initial settings when running the demo in the editor.
-        /// </summary>
-        private Color defaultMaterialColor = Color.black;
-        private int defaultWireThickness = 0;
 
         private void Awake()
         {
             // We do not wish to play the ambient room sound from the audio source.
             gameObject.GetComponent<AudioSource>().volume = 0.0f;
-
-            spatialMeshObserver = (CoreServices.SpatialAwarenessSystem as IMixedRealityDataProviderAccess)?.GetDataProvider<IMixedRealitySpatialAwarenessMeshObserver>();
-            visibleMaterial = spatialMeshObserver?.VisibleMaterial;
-
-            if (visibleMaterial != null)
-            {
-                // Cache the initial material settings.
-                defaultMaterialColor = visibleMaterial.GetColor("_WireColor");
-                defaultWireThickness = visibleMaterial.GetInt("_WireThickness");
-
-                visibleMaterial.SetColor("_WireColor", meshColor);
-            }
 
             micStream = new WindowsMicrophoneStream();
             if (micStream == null)
@@ -76,8 +53,9 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             micStream.Gain = inputGain;
 
             // Initialize the microphone stream.
-            WindowsMicrophoneStreamErrorCode result = micStream.Initialize(WindowsMicrophoneStreamType.HighQualityVoice);
-            if (result != WindowsMicrophoneStreamErrorCode.Success)
+            WindowsMicrophoneStreamErrorCode result = micStream.Initialize(WindowsMicrophoneStreamType.LowQualityVoice);
+            Debug.Log("Init result: " + result);
+            if (result != WindowsMicrophoneStreamErrorCode.Success && result != WindowsMicrophoneStreamErrorCode.AlreadyRunning)
             {
                 Debug.Log($"Failed to initialize the microphone stream. {result}");
                 return;
@@ -86,6 +64,7 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             // Start the microphone stream.
             // Do not keep the data and do not preview.
             result = micStream.StartStream(false, false);
+            Debug.Log("StartStream result: " + result);
             if (result != WindowsMicrophoneStreamErrorCode.Success)
             {
                 Debug.Log($"Failed to start the microphone stream. {result}");
@@ -107,12 +86,6 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             micStream.Uninitialize();
             micStream = null;
 
-            // Restore the initial material settings.
-            if (visibleMaterial != null)
-            {
-                visibleMaterial.SetColor("_WireColor", defaultMaterialColor);
-                visibleMaterial.SetInt("_WireThickness", defaultWireThickness);
-            }
         }
 
         private void OnDisable()
@@ -139,26 +112,10 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             }
         }
 
-        private static int maxWireThickness = 750;
 
         private void Update()
         {
-            if (micStream == null) { return; }
 
-            // Update the gain, if changed.
-            if (micStream.Gain != inputGain)
-            {
-                micStream.Gain = inputGain;
-            }
-
-            if (visibleMaterial != null)
-            {
-                // Artificially increase the amplitude to make the visible effect more pronounced.
-                int wireThickness = (int)(averageAmplitude * amplitudeBoostFactor * maxWireThickness);
-                wireThickness = Mathf.Clamp(wireThickness, 0, maxWireThickness);
-                visibleMaterial.SetInt("_WireThickness", wireThickness);
-                //Debug.Log(wireThickness.ToString());
-            }
         }
 
         private void OnAudioFilterRead(float[] buffer, int numChannels)
@@ -189,6 +146,6 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             averageAmplitude = sumOfValues / buffer.Length;
         }
 
-        // #endif // MICSTREAM_PRESENT
+//#endif // MICSTREAM_PRESENT
     }
 }

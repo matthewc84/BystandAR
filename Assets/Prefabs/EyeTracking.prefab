@@ -628,200 +628,65 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1001 &8507632375298341708
+--- !u!1001 &886016646645306791
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 1596419897990187806}
     m_Modifications:
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.56546575
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.9207418
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalPosition.z
       value: -2.290182
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalRotation.y
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 59383073902624438, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+    - target: {fileID: 8829330659979268189, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
       propertyPath: m_Name
       value: EyeCalibrationChecker
       objectReference: {fileID: 0}
-    - target: {fileID: 2896549485333970486, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_text
-      value: Easiest way to get there? Simply <color=#FDFFB1>flip your visor up and
-        back down </color>and a notification should appear asking you to go through
-        the calibration. You can also start it from <color=#FDFFB1>Settings -> System
-        -> Calibration -> Run eye calibration</color>.
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textAlignment
-      value: 65535
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_TextStyleHashCode
-      value: -1183493901
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_VerticalAlignment
-      value: 512
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_HorizontalAlignment
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_havePropertiesChanged
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_isInputParsingRequired
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textInfo.textComponent
-      value: 
-      objectReference: {fileID: 1246486283575610215, guid: fda837e43ea42874b8a9941a5968b1d1, type: 3}
-    - target: {fileID: 2941753179112369455, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textInfo.characterCount
-      value: 225
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183848, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textAlignment
-      value: 65535
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_TextStyleHashCode
-      value: -1183493901
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_VerticalAlignment
-      value: 512
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_HorizontalAlignment
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_havePropertiesChanged
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_isInputParsingRequired
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3346336527260183894, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textInfo.textComponent
-      value: 
-      objectReference: {fileID: 1724824858966379294, guid: fda837e43ea42874b8a9941a5968b1d1, type: 3}
-    - target: {fileID: 5237194014564181428, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7304426202717140508, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textAlignment
-      value: 65535
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_TextStyleHashCode
-      value: -1183493901
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_VerticalAlignment
-      value: 512
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_havePropertiesChanged
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_isInputParsingRequired
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7647661571346163763, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textInfo.textComponent
-      value: 
-      objectReference: {fileID: 6034453976828333691, guid: fda837e43ea42874b8a9941a5968b1d1, type: 3}
-    - target: {fileID: 8639034156913448031, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textAlignment
-      value: 65535
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_TextStyleHashCode
-      value: -1183493901
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_VerticalAlignment
-      value: 512
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_havePropertiesChanged
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_isInputParsingRequired
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854803465081329498, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-      propertyPath: m_textInfo.textComponent
-      value: 
-      objectReference: {fileID: 4863263709136924946, guid: fda837e43ea42874b8a9941a5968b1d1, type: 3}
     m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
 --- !u!4 &8557919041294419453 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 59383073902624433, guid: d7a95106a0331134db596f593a2d20e4, type: 3}
-  m_PrefabInstance: {fileID: 8507632375298341708}
+  m_CorrespondingSourceObject: {fileID: 8829330659979268186, guid: 00ffa1d36ff7aa645a50148cc1a8a2e4, type: 3}
+  m_PrefabInstance: {fileID: 886016646645306791}
   m_PrefabAsset: {fileID: 0}

@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Mathematics;
+using Unity.Collections;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.InteropServices;
@@ -196,7 +198,7 @@ public class FrameSanitizer : MonoBehaviour
 
             if (returnFrame != null)
             {
-                var sanitizedFrame = await SanitizeFrame(returnFrame, depthData);
+                var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
 
                 if(OffLoadSanitizedFramesToServer)
                 {
@@ -229,7 +231,7 @@ public class FrameSanitizer : MonoBehaviour
                                 UnityEngine.WSA.Application.InvokeOnAppThread(() =>
                                 {
                                     //Visualize the detections in 3D to create GameObejcts for eye gaze to interact with
-                                    RGBDetectionToWorldspace(result, returnFrame);
+                                    RGBDetectionToWorldspace(result, ref returnFrame);
                                 }, false);
                             }
 
@@ -253,7 +255,7 @@ public class FrameSanitizer : MonoBehaviour
 
 #if ENABLE_WINMD_SUPPORT
 
-    private async void RGBDetectionToWorldspace(DetectedFaces result, Frame returnFrame)
+    private void RGBDetectionToWorldspace(DetectedFaces result, ref Frame returnFrame)
    {
 
         //Debug.Log("Number of faces: " + result.Faces.Count());
@@ -306,7 +308,7 @@ public class FrameSanitizer : MonoBehaviour
         return longDepthFrameData;
     }
 
-    private async Task<SanitizedFrames> SanitizeFrame(Frame returnFrame, byte[] depthFrame){
+    private SanitizedFrames SanitizeFrame(ref Frame returnFrame, ref byte[] depthFrame){
 
 
         byte[] depthBytesWithoutBystanders = null;
@@ -334,7 +336,7 @@ public class FrameSanitizer : MonoBehaviour
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
             Collider objCollider =  face.GetComponent<Collider>();
 
-            if (boundingBoxScript.toObscure && GeometryUtility.TestPlanesAABB(planes, objCollider.bounds))
+            if (boundingBoxScript.toObscure && TestPlanesAABB(planes, objCollider.bounds))
             {
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
@@ -414,5 +416,24 @@ public class FrameSanitizer : MonoBehaviour
     {
         longDepthMediaTexture.LoadRawTextureData(longDepthFrameData);
         longDepthMediaTexture.Apply();
+    }
+
+
+    //From: https://forum.unity.com/threads/managed-version-of-geometryutility-testplanesaabb.473575/
+    public bool TestPlanesAABB(Plane[] planes, Bounds bounds)
+
+    {
+        for (int i = 0; i < planes.Length; i++)
+        {
+            Plane plane = planes[i];
+            float3 normal_sign = math.sign(plane.normal);
+            float3 test_point = (float3)(bounds.center) + (bounds.extents * normal_sign);
+
+            float dot = math.dot(test_point, plane.normal);
+            if (dot + plane.distance < 0)
+                return false;
+        }
+
+        return true;
     }
 }

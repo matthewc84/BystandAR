@@ -34,12 +34,6 @@
         "com.unity.xr.openxr": "1.4.2"
       }
     },
-    "com.microsoft.mixedreality.powerthermalnotification": {
-      "version": "file:MixedReality/com.microsoft.mixedreality.powerthermalnotification-0.2.1.tgz",
-      "depth": 0,
-      "source": "local-tarball",
-      "dependencies": {}
-    },
     "com.microsoft.mixedreality.sceneunderstanding": {
       "version": "file:MixedReality/com.microsoft.mixedreality.sceneunderstanding-0.6.0.tgz",
       "depth": 0,
@@ -83,6 +77,12 @@
     },
     "com.microsoft.mixedreality.toolkit.gpustats": {
       "version": "file:MixedReality/com.microsoft.mixedreality.toolkit.gpustats-1.0.3.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {}
+    },
+    "com.microsoft.mixedreality.toolkit.micstream": {
+      "version": "file:MixedReality/com.microsoft.mixedreality.toolkit.micstream-1.0.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {}
@@ -177,6 +177,13 @@
       "dependencies": {
         "com.unity.modules.uielements": "1.0.0"
       },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.mathematics": {
+      "version": "1.2.6",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.nuget.newtonsoft-json": {

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db393d206eab4604ab74278cb6cda355, type: 3}
-  m_Name: New MixedRealityPointerProfile
+  m_Name: CustomMixedRealityInputPointerProfile
   m_EditorClassIdentifier: 
   isCustomProfile: 1
   pointingExtent: 10
@@ -31,7 +31,7 @@ MonoBehaviour:
   isEyeTrackingEnabled: 1
   pointerOptions:
   - controllerType: 5167
-    handedness: 3
+    handedness: 7
     pointerPrefab: {fileID: 1247086986094436, guid: d5b94136462644c9873bb3347169ae7e, type: 3}
     prioritizedLayerMasks:
     - serializedVersion: 2
