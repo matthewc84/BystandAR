@@ -3,7 +3,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using System.IO;
 
@@ -11,7 +13,7 @@ using System.IO;
 using Windows.Media;
 using Windows.Media.Capture;
 using Windows.Media.Devices.Core;
-//using Windows.Storage.Streams;
+using Windows.Foundation;
 using Windows.Media.Capture.Frames;
 using Windows.Media.MediaProperties;
 using Windows.Media.Devices;
@@ -43,6 +45,7 @@ public class MediaCaptureUtility
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _mediaCapture;
     private MediaFrameReader _imageMediaFrameReader;
+    private MediaFrameReader _audioMediaFrameReader;
     private Frame _videoFrame = null;
 
 
@@ -64,25 +67,42 @@ public class MediaCaptureUtility
 
             // Find right camera settings and prefer back camera
             MediaCaptureInitializationSettings settings = new MediaCaptureInitializationSettings();
+            MediaCaptureInitializationSettings audiosettings = new MediaCaptureInitializationSettings();
+
             var allCameras = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
             var selectedCamera = allCameras.FirstOrDefault(c => c.EnclosureLocation?.Panel == Panel.Back) ?? allCameras.FirstOrDefault();
+
 
             if (selectedCamera != null)
             {
                 settings.VideoDeviceId = selectedCamera.Id;
-                //settings.MemoryPreference = MediaCaptureMemoryPreference.Auto;
-                //Debug.Log($"InitializeMediaFrameReaderAsync: settings.VideoDeviceId: {settings.VideoDeviceId}");
+                settings.StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo;
+                //settings.SharingMode =  MediaCaptureSharingMode.SharedReadOnly;
 
             }
 
             // Init capturer and Frame reader
             _mediaCapture = new MediaCapture();
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media capture object.");
-
             await _mediaCapture.InitializeAsync(settings);
+
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully initialized media capture object.");
 
             var imageFrameSourcePair = _mediaCapture.FrameSources.Where(source => source.Value.Info.SourceKind == MediaFrameSourceKind.Color).First();
+            var audioFrameSources = _mediaCapture.FrameSources.Where(x => x.Value.Info.MediaStreamType == MediaStreamType.Audio);
+
+            if (audioFrameSources.Count() == 0)
+            {
+                Debug.Log("No audio frame source was found.");
+                return;
+            }
+
+            MediaFrameSource frameSource = audioFrameSources.FirstOrDefault().Value;
+            MediaFrameFormat format = frameSource.CurrentFormat;
+            if (format.Subtype != MediaEncodingSubtypes.Float)
+            {
+                return;
+            }
 
             // Convert the pixel formats
             //var subtype = MediaEncodingSubtypes.Bgra8;
@@ -90,14 +110,34 @@ public class MediaCaptureUtility
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
+
             _imageMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(imageFrameSourcePair.Value, subtype, outputSize);
+            _audioMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSource);
+
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully created media frame reader.");
+
             _imageMediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
+            _audioMediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
+
+            _audioMediaFrameReader.FrameArrived += MediaFrameReader_AudioFrameArrived;
 
             await _imageMediaFrameReader.StartAsync();
+            var status = await _audioMediaFrameReader.StartAsync();
+
             Debug.Log("InitializeMediaFrameReaderAsync: Successfully started media frame reader.");
 
             IsCapturing = true;
+        }
+    }
+
+     private void MediaFrameReader_AudioFrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
+    {
+        using (MediaFrameReference reference = sender.TryAcquireLatestFrame())
+        {
+            if (reference != null)
+            {
+                ProcessAudioFrame(reference.AudioMediaFrame);
+            }
         }
     }
 
@@ -150,6 +190,28 @@ public class MediaCaptureUtility
         }
     }
 
+    /// <summary>
+    /// Retrieve the latest video frame from the media frame reader
+    /// </summary>
+    /// <returns>VideoFrame object with current frame's software bitmap</returns>
+    public void GetLatestAudioFrame()
+    {
+        try
+        {
+            using (MediaFrameReference reference = _audioMediaFrameReader.TryAcquireLatestFrame())
+            {
+                if (reference != null)
+                {
+                    ProcessAudioFrame(reference.AudioMediaFrame);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
 #endif
 
     /// <summary>
@@ -169,5 +231,49 @@ public class MediaCaptureUtility
         IsCapturing = false;
 #endif
     }
+
+    #if ENABLE_WINMD_SUPPORT
+    unsafe private void ProcessAudioFrame(AudioMediaFrame audioMediaFrame)
+    {
+
+        using (AudioFrame audioFrame = audioMediaFrame.GetAudioFrame())
+        using (AudioBuffer buffer = audioFrame.LockBuffer(AudioBufferAccessMode.Read))
+        using (IMemoryBufferReference reference = buffer.CreateReference())
+        {
+            byte* dataInBytes;
+            uint capacityInBytes;
+            float* dataInFloat;
+
+
+            ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacityInBytes);
+
+            // The requested format was float
+            dataInFloat = (float*)dataInBytes;
+
+            Debug.Log(*dataInFloat);
+
+            // Get the number of samples by multiplying the duration by sampling rate: 
+            // duration [s] x sampling rate [samples/s] = # samples 
+
+            // Duration can be gotten off the frame reference OR the audioFrame
+            TimeSpan duration = audioMediaFrame.FrameReference.Duration;
+
+            // frameDurMs is in milliseconds, while SampleRate is given per second.
+            uint frameDurMs = (uint)duration.TotalMilliseconds;
+            uint sampleRate = audioMediaFrame.AudioEncodingProperties.SampleRate;
+            uint sampleCount = (frameDurMs * sampleRate) / 1000;
+
+        }
+
+    }
+
+    [ComImport]
+    [Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    unsafe interface IMemoryBufferByteAccess
+    {
+        void GetBuffer(out byte* buffer, out uint capacity);
+    }
+#endif
 
 }

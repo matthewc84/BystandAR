@@ -77,7 +77,7 @@ public class FrameSanitizer : MonoBehaviour
     public int samplingInterval;
     public GameObject clientSocket;
     public bool OffLoadSanitizedFramesToServer;
-    public GameObject audioPrefab;
+    //public GameObject audioPrefab;
 
 
     // Private fields
@@ -175,7 +175,6 @@ public class FrameSanitizer : MonoBehaviour
 
         
 #endif
-        //Instantiate(audioPrefab);
     }
     private async void OnDestroy()
     {
@@ -188,7 +187,7 @@ public class FrameSanitizer : MonoBehaviour
 
     async void Update()
     {
-        
+
 #if ENABLE_WINMD_SUPPORT
         counter += 1;
 
@@ -196,6 +195,7 @@ public class FrameSanitizer : MonoBehaviour
         {
             var clientSocketScript = clientSocket.GetComponent<SocketClient>();
             var returnFrame = await _mediaCaptureUtility.GetLatestFrame();
+            //_mediaCaptureUtility.GetLatestAudioFrame();
 
             depthData = RetreiveDepthFrame();
 
