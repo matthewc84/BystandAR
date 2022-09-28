@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using UnityEngine;
-using Microsoft.MixedReality.Toolkit.SpatialAwareness;
+using System.Collections;
 
 //namespace Microsoft.MixedReality.Toolkit.Examples
 //{
@@ -28,6 +28,7 @@ namespace Microsoft.MixedReality.Toolkit.Audio
         private int amplitudeBoostFactor = 10;
 
 
+
         /// <summary>
         /// Class providing microphone stream management support on Microsoft Windows based devices.
         /// </summary>
@@ -38,8 +39,7 @@ namespace Microsoft.MixedReality.Toolkit.Audio
         /// </summary>
         private float averageAmplitude = 0.0f;
 
-
-        private void Awake()
+        IEnumerator Start()
         {
             // We do not wish to play the ambient room sound from the audio source.
             gameObject.GetComponent<AudioSource>().volume = 0.0f;
@@ -58,7 +58,7 @@ namespace Microsoft.MixedReality.Toolkit.Audio
             if (result != WindowsMicrophoneStreamErrorCode.Success && result != WindowsMicrophoneStreamErrorCode.AlreadyRunning)
             {
                 Debug.Log($"Failed to initialize the microphone stream. {result}");
-                return;
+                //return;
             }
 
             // Start the microphone stream.
@@ -69,6 +69,8 @@ namespace Microsoft.MixedReality.Toolkit.Audio
             {
                 Debug.Log($"Failed to start the microphone stream. {result}");
             }
+
+            yield return null;
         }
 
         private void OnDestroy()
@@ -115,7 +117,10 @@ namespace Microsoft.MixedReality.Toolkit.Audio
 
         private void Update()
         {
-
+            if(averageAmplitude != 0)
+            {
+                Debug.Log(averageAmplitude);
+            }
         }
 
         private void OnAudioFilterRead(float[] buffer, int numChannels)
@@ -124,8 +129,8 @@ namespace Microsoft.MixedReality.Toolkit.Audio
 
             // Read the microphone stream data.
             WindowsMicrophoneStreamErrorCode result = micStream.ReadAudioFrame(buffer, numChannels);
-            if (result != WindowsMicrophoneStreamErrorCode.Success)
-            {
+            if (result != WindowsMicrophoneStreamErrorCode.Success && result != WindowsMicrophoneStreamErrorCode.AlreadyRunning)
+                {
                 Debug.Log($"Failed to read the microphone stream data. {result}");
             }
 
@@ -146,6 +151,6 @@ namespace Microsoft.MixedReality.Toolkit.Audio
             averageAmplitude = sumOfValues / buffer.Length;
         }
 
-//#endif // MICSTREAM_PRESENT
+        //#endif // MICSTREAM_PRESENT
     }
 }

@@ -52,29 +52,6 @@ public class NetworkModel : MonoBehaviour
     FaceDetector detector;
 #endif
 
-    public void Awake()
-    {
-#if ENABLE_WINMD_SUPPORT
-
-       
-#endif
-    }
-
-    public async void Start()
-    {
-#if ENABLE_WINMD_SUPPORT
-
-#endif
-    }
-
-    async void Update()
-    {
-#if ENABLE_WINMD_SUPPORT
-
-#endif
-    }
-
-
 #if ENABLE_WINMD_SUPPORT
 
 

@@ -77,7 +77,8 @@ public class FrameSanitizer : MonoBehaviour
     public int samplingInterval;
     public GameObject clientSocket;
     public bool OffLoadSanitizedFramesToServer;
-    
+    public GameObject audioPrefab;
+
 
     // Private fields
     private NetworkModel _networkModel;
@@ -172,8 +173,9 @@ public class FrameSanitizer : MonoBehaviour
 
         }
 
-
+        
 #endif
+        //Instantiate(audioPrefab);
     }
     private async void OnDestroy()
     {
@@ -186,6 +188,7 @@ public class FrameSanitizer : MonoBehaviour
 
     async void Update()
     {
+        
 #if ENABLE_WINMD_SUPPORT
         counter += 1;
 
