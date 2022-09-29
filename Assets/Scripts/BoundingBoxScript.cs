@@ -40,7 +40,7 @@ public class BoundingBoxScript : MonoBehaviour
             RemoveDetection();
         }
 
-        if(framesEyeContactMade > 60 && !colorSet)
+        if(framesEyeContactMade > 200 && !colorSet)
         {
             //this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             toObscure = false;
@@ -52,7 +52,7 @@ public class BoundingBoxScript : MonoBehaviour
     {
         if (frameSanitizer.userSpeaking)
         {
-            framesEyeContactMade += 2;
+            framesEyeContactMade += 5;
             UnityEngine.Debug.Log("Eye and Voice contact!");
         }
         else

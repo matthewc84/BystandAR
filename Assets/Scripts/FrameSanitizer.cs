@@ -189,9 +189,15 @@ public class FrameSanitizer : MonoBehaviour
         {
            //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
             var returnFrame = await _mediaCaptureUtility.GetLatestVideoFrame();
-            if(averageAmplitude > 0.000005f)
+
+            //evaluate the average amplitude of the collected voice input mic
+            if(averageAmplitude > 0.01f)
             {
                 userSpeaking = true;
+            }
+            else
+            {
+                userSpeaking = false;
             }
 
             depthData = RetreiveDepthFrame();
@@ -333,10 +339,15 @@ public class FrameSanitizer : MonoBehaviour
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
-            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            Collider objCollider =  face.GetComponent<Collider>();
+            //Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            //Collider objCollider =  face.GetComponent<Collider>();
+            Vector3 reletiveNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
+            float dot = Vector3.Dot(reletiveNormalizedPos, Camera.main.transform.forward);
+            float angle = Mathf.Acos(dot);
 
-            if (boundingBoxScript.toObscure && TestPlanesAABB(planes, objCollider.bounds))
+            //if (boundingBoxScript.toObscure && TestPlanesAABB(planes, objCollider.bounds))
+            //if (boundingBoxScript.toObscure && face.GetComponent<Renderer>().isVisible)
+            if (boundingBoxScript.toObscure && angle < 0.60F)
             {
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
