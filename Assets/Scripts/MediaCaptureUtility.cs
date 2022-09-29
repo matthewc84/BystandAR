@@ -47,16 +47,11 @@ public class MediaCaptureUtility
     private MediaFrameReader _imageMediaFrameReader;
     private MediaFrameReader _audioMediaFrameReader;
     private Frame _videoFrame = null;
+#endif
 
-
-    /// <summary>
-    /// Method to start capturing camera frames at desired resolution.
-    /// </summary>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <returns></returns>
     public async Task InitializeMediaFrameReaderAsync()
     {
+#if ENABLE_WINMD_SUPPORT
         // Check state of media capture object 
         if (_mediaCapture == null || _mediaCapture.CameraStreamState == CameraStreamState.Shutdown || _mediaCapture.CameraStreamState == CameraStreamState.NotStreaming)
         {
@@ -77,7 +72,6 @@ public class MediaCaptureUtility
             {
                 settings.VideoDeviceId = selectedCamera.Id;
                 settings.StreamingCaptureMode = StreamingCaptureMode.AudioAndVideo;
-                //settings.SharingMode =  MediaCaptureSharingMode.SharedReadOnly;
 
             }
 
@@ -94,14 +88,13 @@ public class MediaCaptureUtility
             if (audioFrameSources.Count() == 0)
             {
                 Debug.Log("No audio frame source was found.");
-                return;
             }
 
             MediaFrameSource frameSource = audioFrameSources.FirstOrDefault().Value;
             MediaFrameFormat format = frameSource.CurrentFormat;
             if (format.Subtype != MediaEncodingSubtypes.Float)
             {
-                return;
+                Debug.Log("Incorrect audio media subtype.");
             }
 
             // Convert the pixel formats
@@ -119,8 +112,6 @@ public class MediaCaptureUtility
             _imageMediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
             _audioMediaFrameReader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
 
-            _audioMediaFrameReader.FrameArrived += MediaFrameReader_AudioFrameArrived;
-
             await _imageMediaFrameReader.StartAsync();
             var status = await _audioMediaFrameReader.StartAsync();
 
@@ -128,24 +119,16 @@ public class MediaCaptureUtility
 
             IsCapturing = true;
         }
+#endif
     }
 
-     private void MediaFrameReader_AudioFrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
-    {
-        using (MediaFrameReference reference = sender.TryAcquireLatestFrame())
-        {
-            if (reference != null)
-            {
-                ProcessAudioFrame(reference.AudioMediaFrame);
-            }
-        }
-    }
+#if ENABLE_WINMD_SUPPORT
 
     /// <summary>
     /// Retrieve the latest video frame from the media frame reader
     /// </summary>
     /// <returns>VideoFrame object with current frame's software bitmap</returns>
-    public async Task<Frame> GetLatestFrame()
+    public async Task<Frame> GetLatestVideoFrame()
     {
         SoftwareBitmap bitmap;
         try{
@@ -194,7 +177,7 @@ public class MediaCaptureUtility
     /// Retrieve the latest video frame from the media frame reader
     /// </summary>
     /// <returns>VideoFrame object with current frame's software bitmap</returns>
-    public void GetLatestAudioFrame()
+    public float GetLatestAudioFrame(float[] buffer, int numChannels)
     {
         try
         {
@@ -202,13 +185,18 @@ public class MediaCaptureUtility
             {
                 if (reference != null)
                 {
-                    ProcessAudioFrame(reference.AudioMediaFrame);
+                   var returnFloat = ProcessAudioFrame(reference.AudioMediaFrame, buffer, buffer.Length, numChannels);
+                   return returnFloat;
+                }
+                else
+                {
+                    return 0.0f;
                 }
             }
         }
         catch (Exception ex)
         {
-
+            return 0.0f;
         }
     }
 
@@ -218,7 +206,7 @@ public class MediaCaptureUtility
     /// Asynchronously stop media capture and dispose of resources
     /// </summary>
     /// <returns></returns>
-    public async Task StopMediaFrameReaderAsync()
+    public async Task OnDestroy()
     {
 #if ENABLE_WINMD_SUPPORT
         if (_mediaCapture != null && _mediaCapture.CameraStreamState != CameraStreamState.Shutdown)
@@ -232,13 +220,13 @@ public class MediaCaptureUtility
 #endif
     }
 
-    #if ENABLE_WINMD_SUPPORT
-    unsafe private void ProcessAudioFrame(AudioMediaFrame audioMediaFrame)
+#if ENABLE_WINMD_SUPPORT
+    unsafe private float ProcessAudioFrame(AudioMediaFrame audioMediaFrame, float[] buffer, int length, int numChannels)
     {
-
+        int indexInFrame = 0;
         using (AudioFrame audioFrame = audioMediaFrame.GetAudioFrame())
-        using (AudioBuffer buffer = audioFrame.LockBuffer(AudioBufferAccessMode.Read))
-        using (IMemoryBufferReference reference = buffer.CreateReference())
+        using (AudioBuffer audioBuffer = audioFrame.LockBuffer(AudioBufferAccessMode.Read))
+        using (IMemoryBufferReference reference = audioBuffer.CreateReference())
         {
             byte* dataInBytes;
             uint capacityInBytes;
@@ -250,7 +238,7 @@ public class MediaCaptureUtility
             // The requested format was float
             dataInFloat = (float*)dataInBytes;
 
-            Debug.Log(*dataInFloat);
+            //Debug.Log(*dataInFloat);
 
             // Get the number of samples by multiplying the duration by sampling rate: 
             // duration [s] x sampling rate [samples/s] = # samples 
@@ -262,6 +250,20 @@ public class MediaCaptureUtility
             uint frameDurMs = (uint)duration.TotalMilliseconds;
             uint sampleRate = audioMediaFrame.AudioEncodingProperties.SampleRate;
             uint sampleCount = (frameDurMs * sampleRate) / 1000;
+
+            int framesize = (int)sampleCount * numChannels;
+
+            /*for (int i = 0; i < length; i++)
+            {
+
+                if (capacityInBytes > 0)
+                {
+                    buffer[i] = dataInFloat[indexInFrame];
+                    ++indexInFrame; 
+                }
+            }*/
+
+            return *dataInFloat;
 
         }
 

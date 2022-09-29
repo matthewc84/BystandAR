@@ -68,6 +68,7 @@ public class SanitizedFrames
 
 }
 
+[RequireComponent(typeof(AudioSource))]
 public class FrameSanitizer : MonoBehaviour
 {
     // Public fields
@@ -77,21 +78,21 @@ public class FrameSanitizer : MonoBehaviour
     public int samplingInterval;
     public GameObject clientSocket;
     public bool OffLoadSanitizedFramesToServer;
-    //public GameObject audioPrefab;
+    public bool userSpeaking;
 
 
     // Private fields
     private NetworkModel _networkModel;
-    private MediaCaptureUtility _mediaCaptureUtility;
     private bool _isRunning = false;
     private byte[] depthData = null;
-    //byte[] sanitizedImageFrameByteArray = null;
     byte[] sanitizedDepthFrameByteArray = null;
     private Material imageMediaMaterial = null;
     private Texture2D imageMediaTexture = null;
     private Material longDepthMediaMaterial = null;
     private Texture2D longDepthMediaTexture = null;
     private Texture2D tempImageTexture;
+    private MediaCaptureUtility _mediaCaptureUtility;
+    private float averageAmplitude = 0.0f;
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -109,6 +110,7 @@ public class FrameSanitizer : MonoBehaviour
 
     async void Start()
     {
+        userSpeaking = false;
         eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
         counter = samplingInterval;
         StartCoroutine(FramerateCountLoop());
@@ -125,19 +127,19 @@ public class FrameSanitizer : MonoBehaviour
             Debug.Log("Error initializing inference model:" + ex.Message);
         }
 
-        // Configure camera to return frames fitting the model input size
+
+        // Create Media Capture instance
         try
         {
                 Debug.Log("Creating MediaCaptureUtility and initializing frame reader.");
                 _mediaCaptureUtility = new MediaCaptureUtility();
                 await _mediaCaptureUtility.InitializeMediaFrameReaderAsync();
-                //Debug.Log("Camera started. Running!");
-                //Debug.Log("Successfully initialized frame reader.");
         }
         catch (Exception ex)
         {
             Debug.Log("Failed to start camera: {ex.Message}. Using loaded/picked image.");
         }
+
 
         worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
 
@@ -176,14 +178,6 @@ public class FrameSanitizer : MonoBehaviour
         
 #endif
     }
-    private async void OnDestroy()
-    {
-        _isRunning = false;
-        if (_mediaCaptureUtility != null)
-        {
-            await _mediaCaptureUtility.StopMediaFrameReaderAsync();
-        }
-    }
 
     async void Update()
     {
@@ -193,9 +187,12 @@ public class FrameSanitizer : MonoBehaviour
 
         if (_mediaCaptureUtility.IsCapturing)
         {
-            var clientSocketScript = clientSocket.GetComponent<SocketClient>();
-            var returnFrame = await _mediaCaptureUtility.GetLatestFrame();
-            //_mediaCaptureUtility.GetLatestAudioFrame();
+           //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
+            var returnFrame = await _mediaCaptureUtility.GetLatestVideoFrame();
+            if(averageAmplitude > 0.000005f)
+            {
+                userSpeaking = true;
+            }
 
             depthData = RetreiveDepthFrame();
 
@@ -205,7 +202,7 @@ public class FrameSanitizer : MonoBehaviour
 
                 if(OffLoadSanitizedFramesToServer)
                 {
-                    clientSocketScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToPNG());
+                    //clientSocketScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToPNG());
 
                 }
 
@@ -439,4 +436,30 @@ public class FrameSanitizer : MonoBehaviour
 
         return true;
     }
+
+#if ENABLE_WINMD_SUPPORT
+    private void OnAudioFilterRead(float[] buffer, int numChannels)
+    {
+
+        // Read the microphone stream data.
+        var returnFloat = _mediaCaptureUtility.GetLatestAudioFrame(buffer, numChannels);
+
+        float sumOfValues = 0;
+
+        // Calculate this frame's average amplitude.
+        /*for (int i = 0; i < buffer.Length; i++)
+        {
+            if (float.IsNaN(buffer[i]))
+            {
+                buffer[i] = 0;
+            }
+
+            buffer[i] = Mathf.Clamp(buffer[i], -1.0f, 1.0f);
+            sumOfValues += Mathf.Clamp01(Mathf.Abs(buffer[i]));
+        }*/
+
+        //averageAmplitude = sumOfValues / buffer.Length;
+        averageAmplitude = Mathf.Abs(Mathf.Clamp(returnFloat, -1.0f, 1.0f));
+    }
+#endif
 }

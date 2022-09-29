@@ -14,16 +14,17 @@ public class BoundingBoxScript : MonoBehaviour
     public bool toObscure = true;
     private float initializationTime;
     private bool colorSet = false;
+    private FrameSanitizer frameSanitizer;
 
     void Start()
     {
         counter = 0;
         initializationTime = Time.realtimeSinceStartup;
-
+        frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
 
     }
 
-    
+
     void RemoveDetection()
     {
 
@@ -34,12 +35,12 @@ public class BoundingBoxScript : MonoBehaviour
     {
         counter += 1;
         //If object has existed for more than the given threshold without update, we treat it as stale and remove
-        if (counter > 45)
+        if (counter > 30)
         {
             RemoveDetection();
         }
 
-        if(framesEyeContactMade > 30 && !colorSet)
+        if(framesEyeContactMade > 60 && !colorSet)
         {
             //this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             toObscure = false;
@@ -49,8 +50,17 @@ public class BoundingBoxScript : MonoBehaviour
 
     public void EyeContactMade()
     {
-
-        framesEyeContactMade += 1;
+        if (frameSanitizer.userSpeaking)
+        {
+            framesEyeContactMade += 2;
+            UnityEngine.Debug.Log("Eye and Voice contact!");
+        }
+        else
+        {
+            framesEyeContactMade += 1;
+        }
+        
+        
     }
 
 
