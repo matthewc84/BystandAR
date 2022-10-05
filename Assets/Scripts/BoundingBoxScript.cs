@@ -13,7 +13,6 @@ public class BoundingBoxScript : MonoBehaviour
     public float bboxHeight = 0;
     public bool toObscure = true;
     private float initializationTime;
-    private bool colorSet = false;
     private FrameSanitizer frameSanitizer;
 
     void Start()
@@ -35,16 +34,14 @@ public class BoundingBoxScript : MonoBehaviour
     {
         counter += 1;
         //If object has existed for more than the given threshold without update, we treat it as stale and remove
-        if (counter > 30)
+        if (counter > 60)
         {
             RemoveDetection();
         }
 
-        if(framesEyeContactMade > 200 && !colorSet)
+        if(framesEyeContactMade > 100)
         {
-            //this.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             toObscure = false;
-            colorSet = true;
         }
     }
 
@@ -64,7 +61,7 @@ public class BoundingBoxScript : MonoBehaviour
     }
 
 
-    //If this gameobject is in the same physical space another bounding box, we compare the time they have existed and remove the younger one
+    //If this gameobject is in the same physical space another bounding box, we compare the time they have existed and remove the older one
     //This allows for tracking the amount of eye contact over multiple detections.
     void OnCollisionEnter(Collision collision)
     {
@@ -73,6 +70,7 @@ public class BoundingBoxScript : MonoBehaviour
             //UnityEngine.Debug.Log("Collision");
             if (collision.gameObject.GetComponent<BoundingBoxScript>().initializationTime > this.initializationTime)
             {
+                collision.gameObject.GetComponent<BoundingBoxScript>().toObscure = this.toObscure;
                 collision.gameObject.GetComponent<BoundingBoxScript>().framesEyeContactMade = this.framesEyeContactMade;
                 RemoveDetection();
             }

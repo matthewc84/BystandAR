@@ -76,9 +76,12 @@ public class FrameSanitizer : MonoBehaviour
     public GameObject imagePreviewPlane;
     public GameObject longDepthPreviewPlane;
     public int samplingInterval;
-    public GameObject clientSocket;
+    public int frameCaptureInterval;
     public bool OffLoadSanitizedFramesToServer;
+    public bool OffLoadSanitizedFramesToDisk;
+    public bool ShowDebugImagesAndDepth;
     public bool userSpeaking;
+    public bool logData = true;
 
 
     // Private fields
@@ -93,6 +96,8 @@ public class FrameSanitizer : MonoBehaviour
     private Texture2D tempImageTexture;
     private MediaCaptureUtility _mediaCaptureUtility;
     private float averageAmplitude = 0.0f;
+    private SocketClientImages clientSocketScriptImages;
+    private SocketClientDepth clientSocketScriptDepth;
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -101,7 +106,8 @@ public class FrameSanitizer : MonoBehaviour
 
 #endif
 
-    int counter;
+    int samplingCounter;
+    int frameCaptureCounter = 0;
     Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
     float averageFaceWidthInMeters = 0.15f;
     float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
@@ -112,7 +118,7 @@ public class FrameSanitizer : MonoBehaviour
     {
         userSpeaking = false;
         eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
-        counter = samplingInterval;
+        samplingCounter = samplingInterval;
         StartCoroutine(FramerateCountLoop());
         //create temp texture to apply SoftwareBitmap to, in order to sanitize
         tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
@@ -177,21 +183,24 @@ public class FrameSanitizer : MonoBehaviour
 
         
 #endif
+        clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
+        clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
     }
 
     async void Update()
     {
 
 #if ENABLE_WINMD_SUPPORT
-        counter += 1;
+        samplingCounter += 1;
+        frameCaptureCounter += 1;
 
         if (_mediaCaptureUtility.IsCapturing)
         {
-           //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
+
             var returnFrame = await _mediaCaptureUtility.GetLatestVideoFrame();
 
             //evaluate the average amplitude of the collected voice input mic
-            if(averageAmplitude > 0.01f)
+            if(averageAmplitude > 0.005f)
             {
                 userSpeaking = true;
             }
@@ -206,23 +215,31 @@ public class FrameSanitizer : MonoBehaviour
             {
                 var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
 
-                if(OffLoadSanitizedFramesToServer)
+
+                if(OffLoadSanitizedFramesToServer && logData && frameCaptureCounter > frameCaptureInterval)
                 {
-                    //clientSocketScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToPNG());
+                    frameCaptureCounter = 0;
+                    clientSocketScriptImages.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                    clientSocketScriptDepth.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
 
                 }
 
+
+                if(ShowDebugImagesAndDepth)
+                {
+                    if (sanitizedFrame.sanitizedDepthFrame != null)
+                    {
+                        DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
+                    }
+
+                    DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
+                }
                 
-                if (sanitizedFrame.sanitizedDepthFrame != null)
-                {
-                    DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
-                }
 
-                DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
 
-                if (counter >= samplingInterval)
+                if (samplingCounter >= samplingInterval)
                 {
-                    counter = 0;
+                    samplingCounter = 0;
 
                     Task thread = Task.Run(async () =>
                     {
@@ -316,7 +333,6 @@ public class FrameSanitizer : MonoBehaviour
 
     private SanitizedFrames SanitizeFrame(ref Frame returnFrame, ref byte[] depthFrame){
 
-
         byte[] depthBytesWithoutBystanders = null;
         byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
         returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
@@ -339,43 +355,46 @@ public class FrameSanitizer : MonoBehaviour
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
-            //Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            //Collider objCollider =  face.GetComponent<Collider>();
-            Vector3 reletiveNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
-            float dot = Vector3.Dot(reletiveNormalizedPos, Camera.main.transform.forward);
+            Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
+            float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
             float angle = Mathf.Acos(dot);
 
-            //if (boundingBoxScript.toObscure && TestPlanesAABB(planes, objCollider.bounds))
-            //if (boundingBoxScript.toObscure && face.GetComponent<Renderer>().isVisible)
-            if (boundingBoxScript.toObscure && angle < 0.60F)
+            if (boundingBoxScript.toObscure && angle < 0.62F)
             {
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
                 Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
-                    var xCoordDepth = (float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F);
-                    var yCoordDepth = (float)(projected2DPoint.Y * depthToImageHeightRatio) + (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F);
-                    var scaledDepthHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio), 288f);
-                    var scaledDepthWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageHeightRatio), 320f);
+                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
+                    var yCoordDepth = Mathf.Max(288 - ((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F)), 0);
+                    xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
+                    yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
+                    
+                    var scaledDepthBoxWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageWidthRatio), 320f);
+                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio), 288f);
+
 
                     float scaledImageHeight;
                     float scaledImageWidth;
-                    var xCoordImage = (float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F);
-                    var yCoordImage = (float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F);
 
-                    if((xCoordImage + boundingBoxScript.bboxWidth) > 1280f)
+                    var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
+                    var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
+                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, 1280f);
+                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, 720f);
+                    if((xCoordImage + boundingBoxScript.bboxWidth) >= 1280f)
                     {
-                        scaledImageWidth = boundingBoxScript.bboxWidth - (xCoordImage + boundingBoxScript.bboxWidth - 1280f);
+                        scaledImageWidth = (1280 - xCoordImage);
                     }
                     else
                     {
                         scaledImageWidth = boundingBoxScript.bboxWidth;
                     }
 
-                    if((yCoordImage + boundingBoxScript.bboxHeight) > 720f)
+                    if((yCoordImage + boundingBoxScript.bboxHeight) >= 720f)
                     {
-                        scaledImageHeight = boundingBoxScript.bboxHeight - (yCoordImage + boundingBoxScript.bboxHeight - 720f);
+
+                        scaledImageHeight = (720 - yCoordImage);
                     }
                     else
                     {
@@ -385,16 +404,15 @@ public class FrameSanitizer : MonoBehaviour
                 if(depthFrame != null)
                 {
 
-                    for (uint rows = (uint)yCoordDepth; rows < scaledDepthHeight; rows++)
+                    for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
                     {
-                        for (uint columns = (uint)xCoordDepth; columns < scaledDepthWidth; columns++)
+                        for (uint columns = (uint)xCoordDepth; columns < scaledDepthBoxWidth; columns++)
                         {
                             depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
                         }
                     }
 
                 }
-
 
                 Color[] colors = new Color[(int)scaledImageWidth * (int)scaledImageHeight];
                 tempImageTexture.SetPixels((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
@@ -429,24 +447,6 @@ public class FrameSanitizer : MonoBehaviour
         longDepthMediaTexture.Apply();
     }
 
-
-    //From: https://forum.unity.com/threads/managed-version-of-geometryutility-testplanesaabb.473575/
-    public bool TestPlanesAABB(Plane[] planes, Bounds bounds)
-
-    {
-        for (int i = 0; i < planes.Length; i++)
-        {
-            Plane plane = planes[i];
-            float3 normal_sign = math.sign(plane.normal);
-            float3 test_point = (float3)(bounds.center) + (bounds.extents * normal_sign);
-
-            float dot = math.dot(test_point, plane.normal);
-            if (dot + plane.distance < 0)
-                return false;
-        }
-
-        return true;
-    }
 
 #if ENABLE_WINMD_SUPPORT
     private void OnAudioFilterRead(float[] buffer, int numChannels)
