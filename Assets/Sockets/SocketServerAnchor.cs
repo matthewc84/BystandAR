@@ -68,6 +68,7 @@ public class SocketServerAnchor : MonoBehaviour
         listener.ConnectionReceived += Listener_ConnectionReceived;
         listener.Control.KeepAlive = true;
         await Listener_Start();
+        //DontDestroyOnLoad(this.gameObject);
 
         anchorStream = await tryAddLocalAnchor();
         while (anchorStream == null)
@@ -202,26 +203,29 @@ public class SocketServerAnchor : MonoBehaviour
             await dataWriter.FlushAsync();
             await dataWriter.WriteAsync(byteAnchorStreamTemp, 0, byteAnchorStreamTemp.Length);
             await dataWriter.FlushAsync();
-            Stream dataReader = client.InputStream.AsStreamForRead();
-            byte[] bytes = Encoding.ASCII.GetBytes("Done");
-            byte[] myReadBuffer = new byte[bytes.Length];
-            int bytesRead = await dataReader.ReadAsync(myReadBuffer, 0, bytes.Length);
-            if (bytes.SequenceEqual(myReadBuffer))
-            {
-                Debug.Log("Anchor sent to client");
-                return true;
-            }
-            else
-            {
-                Debug.Log("Anchor XFer Failed");
-                return false;
-            }
+            //Stream dataReader = client.InputStream.AsStreamForRead();
+            //byte[] bytes = Encoding.ASCII.GetBytes("Done");
+            //byte[] myReadBuffer = new byte[bytes.Length];
+            //int bytesRead = await dataReader.ReadAsync(myReadBuffer, 0, bytes.Length);
+            //if (bytes.SequenceEqual(myReadBuffer))
+            //{
+            //   Debug.Log("Anchor sent to client");
+            //    return true;
+            //}
+            //else
+            //{
+            //    Debug.Log("Anchor XFer Failed");
+            //   return false;
+            //}
+            anchorSent = true;
+            return true;
             
 
         }
         catch (Exception e)
         {
             Debug.Log("Anchor transfer failed");
+            anchorSent = false;
             return false;
             throw;
         }

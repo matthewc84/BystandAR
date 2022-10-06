@@ -34,6 +34,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     #region Private Fields
 
     GameObject spawnedServer;
+    GameObject spawnedClient;
     /// <summary>
     /// This client's version number. Users are separated from each other by gameVersion (which allows you to make breaking changes).
     /// </summary>
@@ -68,7 +69,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Update()
     {
-        if (PhotonNetwork.IsMasterClient)
+        /*if (PhotonNetwork.IsMasterClient)
         {
             if (spawnedServer)
             {
@@ -79,6 +80,17 @@ public class Launcher : MonoBehaviourPunCallbacks
             }
 
         }
+        else
+        {
+            if (spawnedClient)
+            {
+                if (spawnedClient.GetComponent<SocketClientAnchor>().anchorReceived == true)
+                {
+                    PhotonNetwork.LoadLevel("FacialDetection");
+                }
+            }
+
+        }*/
     }
 
 
@@ -153,15 +165,16 @@ public class Launcher : MonoBehaviourPunCallbacks
         // #Critical
         // Load the Room Level.
         PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        if (PhotonNetwork.IsMasterClient)
+        PhotonNetwork.LoadLevel("FacialDetection");
+        /*if (PhotonNetwork.IsMasterClient)
         {
             spawnedServer = Instantiate(socketServerPrefabAnchor);
         }
         else
         {
-            Instantiate(socketClientPrefabAnchor);
-        }
-        
+            spawnedClient = Instantiate(socketClientPrefabAnchor);
+        }*/
+
 
 
     }

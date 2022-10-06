@@ -61,43 +61,45 @@ public static class NumericsConversionExtensions
 
 #endregion
 
-public class SanitizedFrames
+namespace BystandAR
 {
-    public byte[] sanitizedDepthFrame { get; set; }
-    public Texture2D sanitizedImageFrame { get; set; }
+    public class SanitizedFrames
+    {
+        public byte[] sanitizedDepthFrame { get; set; }
+        public Texture2D sanitizedImageFrame { get; set; }
 
-}
+    }
 
-[RequireComponent(typeof(AudioSource))]
-public class FrameSanitizer : MonoBehaviour
-{
-    // Public fields
-    public GameObject objectOutlineCube;
-    public GameObject imagePreviewPlane;
-    public GameObject longDepthPreviewPlane;
-    public int samplingInterval;
-    public int frameCaptureInterval;
-    public bool OffLoadSanitizedFramesToServer;
-    public bool OffLoadSanitizedFramesToDisk;
-    public bool ShowDebugImagesAndDepth;
-    public bool userSpeaking;
-    public bool logData = true;
+    [RequireComponent(typeof(AudioSource))]
+    public class FrameSanitizer : MonoBehaviour
+    {
+        // Public fields
+        public GameObject objectOutlineCube;
+        public GameObject imagePreviewPlane;
+        public GameObject longDepthPreviewPlane;
+        public int samplingInterval;
+        public int frameCaptureInterval;
+        public bool OffLoadSanitizedFramesToServer;
+        public bool OffLoadSanitizedFramesToDisk;
+        public bool ShowDebugImagesAndDepth;
+        public bool userSpeaking;
+        public bool logData = true;
 
 
-    // Private fields
-    private NetworkModel _networkModel;
-    private bool _isRunning = false;
-    private byte[] depthData = null;
-    byte[] sanitizedDepthFrameByteArray = null;
-    private Material imageMediaMaterial = null;
-    private Texture2D imageMediaTexture = null;
-    private Material longDepthMediaMaterial = null;
-    private Texture2D longDepthMediaTexture = null;
-    private Texture2D tempImageTexture;
-    private MediaCaptureUtility _mediaCaptureUtility;
-    private float averageAmplitude = 0.0f;
-    private SocketClientImages clientSocketScriptImages;
-    private SocketClientDepth clientSocketScriptDepth;
+        // Private fields
+        private NetworkModel _networkModel;
+        private bool _isRunning = false;
+        private byte[] depthData = null;
+        byte[] sanitizedDepthFrameByteArray = null;
+        private Material imageMediaMaterial = null;
+        private Texture2D imageMediaTexture = null;
+        private Material longDepthMediaMaterial = null;
+        private Texture2D longDepthMediaTexture = null;
+        private Texture2D tempImageTexture;
+        private MediaCaptureUtility _mediaCaptureUtility;
+        private float averageAmplitude = 0.0f;
+        private SocketClientImages clientSocketScriptImages;
+        private SocketClientDepth clientSocketScriptDepth;
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -106,22 +108,22 @@ public class FrameSanitizer : MonoBehaviour
 
 #endif
 
-    int samplingCounter;
-    int frameCaptureCounter = 0;
-    Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
-    float averageFaceWidthInMeters = 0.15f;
-    float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
+        int samplingCounter;
+        int frameCaptureCounter = 0;
+        Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
+        float averageFaceWidthInMeters = 0.15f;
+        float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
 
-    #region UnityMethods
+        #region UnityMethods
 
-    async void Start()
-    {
-        userSpeaking = false;
-        eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
-        samplingCounter = samplingInterval;
-        StartCoroutine(FramerateCountLoop());
-        //create temp texture to apply SoftwareBitmap to, in order to sanitize
-        tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+        async void Start()
+        {
+            userSpeaking = false;
+            eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
+            samplingCounter = samplingInterval;
+            StartCoroutine(FramerateCountLoop());
+            //create temp texture to apply SoftwareBitmap to, in order to sanitize
+            tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -183,12 +185,12 @@ public class FrameSanitizer : MonoBehaviour
 
         
 #endif
-        //clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
-        //clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
-    }
+            //clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
+            //clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
+        }
 
-    async void Update()
-    {
+        async void Update()
+        {
 
 #if ENABLE_WINMD_SUPPORT
         samplingCounter += 1;
@@ -270,9 +272,9 @@ public class FrameSanitizer : MonoBehaviour
             
         }
 #endif
-    }
+        }
 
-    #endregion
+        #endregion
 
 
 
@@ -426,26 +428,26 @@ public class FrameSanitizer : MonoBehaviour
     }
 
 #endif
-    IEnumerator FramerateCountLoop()
-    {
-        while (true)
+        IEnumerator FramerateCountLoop()
         {
-            yield return new WaitForSeconds(15);
-            Debug.Log("Current Frame Rate: " + (int)(1.0f / Time.smoothDeltaTime));
+            while (true)
+            {
+                yield return new WaitForSeconds(15);
+                Debug.Log("Current Frame Rate: " + (int)(1.0f / Time.smoothDeltaTime));
+            }
         }
-    }
 
-    private void DisplayImageOnQuad(Texture2D inputImage)
-    {
-        Graphics.CopyTexture(inputImage, imageMediaTexture);
-        imageMediaTexture.Apply();
-    }
+        private void DisplayImageOnQuad(Texture2D inputImage)
+        {
+            Graphics.CopyTexture(inputImage, imageMediaTexture);
+            imageMediaTexture.Apply();
+        }
 
-    private void DisplayDepthOnQuad(byte[] longDepthFrameData)
-    {
-        longDepthMediaTexture.LoadRawTextureData(longDepthFrameData);
-        longDepthMediaTexture.Apply();
-    }
+        private void DisplayDepthOnQuad(byte[] longDepthFrameData)
+        {
+            longDepthMediaTexture.LoadRawTextureData(longDepthFrameData);
+            longDepthMediaTexture.Apply();
+        }
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -473,4 +475,7 @@ public class FrameSanitizer : MonoBehaviour
         averageAmplitude = Mathf.Abs(Mathf.Clamp(returnFloat, -1.0f, 1.0f));
     }
 #endif
+    }
 }
+
+ 

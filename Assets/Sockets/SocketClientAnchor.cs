@@ -36,7 +36,7 @@ public class SocketClientAnchor : MonoBehaviour
 #if !UNITY_EDITOR
     StreamSocket socket = new Windows.Networking.Sockets.StreamSocket();
     HostName serverHost = new HostName("192.168.0.162");
-    String port = "15462";
+    String port = "65432";
     bool _Connected = false;
 
 #endif
@@ -47,6 +47,8 @@ public class SocketClientAnchor : MonoBehaviour
 #if !UNITY_EDITOR
         socket.Control.KeepAlive = true;
         Client_Start();
+        //DontDestroyOnLoad(this.gameObject);
+
 #endif
     }
 
@@ -129,9 +131,9 @@ public class SocketClientAnchor : MonoBehaviour
                 {
                     myAnchorTransferBatch.LoadAndReplaceAnchor(myAnchorTransferBatch.AnchorNames[0], GameObject.Find("AnchorParent").GetComponent<ARAnchor>().trackableId);
                     Debug.Log("Host Anchor Imported to Local System");
-                    byte[] bytes = Encoding.ASCII.GetBytes("Done");
-                    Stream dataWriter = socket.OutputStream.AsStreamForWrite();
-                    await dataWriter.WriteAsync(bytes, 0, bytes.Length);
+                    //byte[] bytes = Encoding.ASCII.GetBytes("Done");
+                    //Stream dataWriter = socket.OutputStream.AsStreamForWrite();
+                    //await dataWriter.WriteAsync(bytes, 0, bytes.Length);
                     anchorReceived = true;
                 }
 

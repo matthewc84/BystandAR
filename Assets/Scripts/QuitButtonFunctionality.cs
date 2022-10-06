@@ -14,28 +14,28 @@ using UnityEditor.Events;
 ///     Handles the start of the inference model
 /// </summary>
 /// 
-public class QuitButtonFunctionality : MonoBehaviour
+
+namespace BystandAR
 {
-    //private NetworkManager netManager;
-
-    FrameSanitizer sanitizerScript;
-
-
-    void Start()
+    public class QuitButtonFunctionality : MonoBehaviour
     {
-        sanitizerScript = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
+        //private NetworkManager netManager;
+
+        FrameSanitizer sanitizerScript;
+
+
+        void Start()
+        {
+            sanitizerScript = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
+        }
+
+        public void quitButtonPressed()
+        {
+            sanitizerScript.logData = false;
+            //Application.Quit();
+
+        }
+
+
     }
-
-    public void quitButtonPressed()
-    {
-        sanitizerScript.logData = false;
-        //Application.Quit();
-
-    }
-
-
-
-
-
-
 }
