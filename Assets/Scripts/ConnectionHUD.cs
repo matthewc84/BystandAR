@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 using Object = UnityEngine.Object;
-//using Unity.Netcode;
 using Microsoft.MixedReality.Toolkit;
 
 #if UNITY_EDITOR
@@ -19,42 +18,21 @@ public class ConnectionHUD : MonoBehaviour
     //private NetworkManager netManager;
 
     public GameObject buttonParent;
-    public GameObject _socketClient;
-    public GameObject _socketServer;
+
+    private Launcher _launcher;
 
 
     void Start()
     {
-        //netManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        _launcher = GameObject.Find("Launcher").GetComponent<Launcher>();
     }
 
-        public void serverButtonPressed()
+        public void spawnCubePressed()
     {
-        //if (!NetworkManager.Singleton.IsHost && !NetworkManager.Singleton.IsClient)
-       // {
-            //When Button pressed, start host
-            //netManager.StartHost();
-            Instantiate(_socketServer);
-            //startHostButton.GetComponentInChildren<TextMeshPro>().SetText("End Client Discovery");
-            buttonParent.SetActive(false);
-
-        //}
-
+        _launcher.spawnCube();
     }
 
 
-    public void clientButtonPressed()
-    {
-        //if (!NetworkManager.Singleton.IsClient)
-        //{
-
-            //netManager.StartClient();
-            Instantiate(_socketClient);
-            buttonParent.SetActive(false);
-        //}
-
-
-    }
 
 
 

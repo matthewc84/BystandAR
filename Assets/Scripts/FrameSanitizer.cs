@@ -183,8 +183,8 @@ public class FrameSanitizer : MonoBehaviour
 
         
 #endif
-        clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
-        clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
+        //clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
+        //clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
     }
 
     async void Update()
