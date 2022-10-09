@@ -41,7 +41,7 @@ public class SocketClientDepth : MonoBehaviour
 #endif
 
     XRAnchorTransferBatch myAnchorTransferBatch = new XRAnchorTransferBatch();
-    bool connectedToServer = false;
+    public bool connectedToServer = false;
     MemoryStream tempStream = new MemoryStream();
     int counter = 0;
     public bool queueOpen = true;

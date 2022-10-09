@@ -10,9 +10,6 @@ using Photon.Realtime;
 public class Launcher : MonoBehaviourPunCallbacks
 {
 
-    public GameObject socketServerPrefabAnchor;
-    public GameObject socketClientPrefabAnchor;
-
     #region Private Serializable Fields
     /// <summary>
     /// The maximum number of players per room. When a room is full, it can't be joined by new players, and so new room will be created.
@@ -33,8 +30,6 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     #region Private Fields
 
-    GameObject spawnedServer;
-    GameObject spawnedClient;
     /// <summary>
     /// This client's version number. Users are separated from each other by gameVersion (which allows you to make breaking changes).
     /// </summary>
@@ -55,7 +50,8 @@ public class Launcher : MonoBehaviourPunCallbacks
             // #Critical
             // this makes sure we can use PhotonNetwork.LoadLevel() on the master client and all clients in the same room sync their level automatically
             PhotonNetwork.AutomaticallySyncScene = true;
-        }
+        //DontDestroyOnLoad(this.gameObject);
+    }
 
 
         /// <summary>
@@ -69,28 +65,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Update()
     {
-        /*if (PhotonNetwork.IsMasterClient)
-        {
-            if (spawnedServer)
-            {
-                if (spawnedServer.GetComponent<SocketServerAnchor>().anchorSent == true)
-                {
-                    PhotonNetwork.LoadLevel("FacialDetection");
-                }
-            }
 
-        }
-        else
-        {
-            if (spawnedClient)
-            {
-                if (spawnedClient.GetComponent<SocketClientAnchor>().anchorReceived == true)
-                {
-                    PhotonNetwork.LoadLevel("FacialDetection");
-                }
-            }
-
-        }*/
     }
 
 
@@ -120,12 +95,6 @@ public class Launcher : MonoBehaviourPunCallbacks
             PhotonNetwork.GameVersion = gameVersion;
             }
         }
-
-
-    public void spawnCube()
-    {
-        PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-    }
 
 
     #endregion
@@ -164,19 +133,15 @@ public class Launcher : MonoBehaviourPunCallbacks
         Debug.Log("PUN Basics Tutorial/Launcher: OnJoinedRoom() called by PUN. Now this client is in a room.");
         // #Critical
         // Load the Room Level.
-        PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        PhotonNetwork.LoadLevel("FacialDetection");
-        /*if (PhotonNetwork.IsMasterClient)
-        {
-            spawnedServer = Instantiate(socketServerPrefabAnchor);
-        }
-        else
-        {
-            spawnedClient = Instantiate(socketClientPrefabAnchor);
-        }*/
+        var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
+        player.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
 
+    }
 
-
+    public void spawnCube()
+    {
+        GameObject newCube = PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, .5f), Quaternion.identity);
+        //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
     }
 
     #endregion

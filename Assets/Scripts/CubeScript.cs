@@ -1,19 +1,25 @@
-using System.Collections;
-using System.Collections.Generic;
+using Microsoft.MixedReality.Toolkit.Input;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
-public class CubeScript : MonoBehaviour
+public class CubeScript : MonoBehaviour, IPunInstantiateMagicCallback, IMixedRealityFocusHandler
 {
-    // Start is called before the first frame update
-    void Start()
+    public void OnFocusEnter(FocusEventData eventData)
     {
-        DontDestroyOnLoad(this.gameObject);
-        this.transform.SetParent(GameObject.Find("ParentAnchor").transform);
+        // ask the photonview for permission
+        var photonView = this.GetComponent<PhotonView>();
+
+        photonView?.RequestOwnership();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void OnFocusExit(FocusEventData eventData)
     {
+    }
+
+    public void OnPhotonInstantiate(PhotonMessageInfo info)
+    {
+
 
     }
 }

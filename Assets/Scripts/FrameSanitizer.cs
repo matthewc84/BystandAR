@@ -84,6 +84,8 @@ namespace BystandAR
         public bool ShowDebugImagesAndDepth;
         public bool userSpeaking;
         public bool logData = true;
+        public GameObject clientSocketImages;
+        public GameObject clientSocketDepth;
 
 
         // Private fields
@@ -98,8 +100,11 @@ namespace BystandAR
         private Texture2D tempImageTexture;
         private MediaCaptureUtility _mediaCaptureUtility;
         private float averageAmplitude = 0.0f;
-        private SocketClientImages clientSocketScriptImages;
-        private SocketClientDepth clientSocketScriptDepth;
+        private SocketClientImages clientSocketImagesScript = null;
+        private SocketClientDepth clientSocketDepthScript = null;
+
+
+
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -124,6 +129,8 @@ namespace BystandAR
             StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+            clientSocketImagesScript = clientSocketImages.GetComponent<SocketClientImages>();
+            clientSocketDepthScript = clientSocketDepth.GetComponent<SocketClientDepth>();
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -185,8 +192,7 @@ namespace BystandAR
 
         
 #endif
-            //clientSocketScriptImages = GameObject.Find("SocketClientImages").GetComponent<SocketClientImages>();
-            //clientSocketScriptDepth = GameObject.Find("SocketClientDepth").GetComponent<SocketClientDepth>();
+
         }
 
         async void Update()
@@ -218,11 +224,12 @@ namespace BystandAR
                 var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
 
 
-                if(OffLoadSanitizedFramesToServer && logData && frameCaptureCounter > frameCaptureInterval)
+                if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && clientSocketImages.activeSelf && clientSocketDepth.activeSelf 
+                    && clientSocketImagesScript.connectedToServer&& clientSocketDepthScript.connectedToServer)
                 {
                     frameCaptureCounter = 0;
-                    clientSocketScriptImages.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
-                    clientSocketScriptDepth.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
+                    clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                    clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
 
                 }
 

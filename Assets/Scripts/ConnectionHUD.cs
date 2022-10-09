@@ -15,21 +15,52 @@ using UnityEditor.Events;
 /// 
 public class ConnectionHUD : MonoBehaviour
 {
-    //private NetworkManager netManager;
 
     public GameObject buttonParent;
+    public GameObject _interviewQuestions;
+    public GameObject _socketClientImages;
+    public GameObject _socketClientDepth;
+    public GameObject _spawnCube;
+    public GameObject _launcher;
+    public GameObject _gameManager;
 
-    private Launcher _launcher;
 
 
     void Start()
     {
-        _launcher = GameObject.Find("Launcher").GetComponent<Launcher>();
+        
     }
 
-        public void spawnCubePressed()
+    public void startInterviewNoLoggingPressed()
     {
-        _launcher.spawnCube();
+        _interviewQuestions.SetActive(true);
+        buttonParent.SetActive(false);
+    }
+
+    public void startBlocksNoLoggingPressed()
+    {
+        _spawnCube.SetActive(true);
+        _launcher.SetActive(true);
+        _gameManager.SetActive(true);
+        buttonParent.SetActive(false);
+    }
+
+    public void startInterviewLoggingPressed()
+    {
+        _interviewQuestions.SetActive(true);
+        _socketClientImages.SetActive(true);
+        _socketClientDepth.SetActive(true);
+        buttonParent.SetActive(false);
+    }
+
+    public void startBlocksLoggingPressed()
+    {
+        _socketClientImages.SetActive(true);
+        _socketClientDepth.SetActive(true);
+        _spawnCube.SetActive(true);
+        _launcher.SetActive(true);
+        _gameManager.SetActive(true);
+        buttonParent.SetActive(false);
     }
 
 

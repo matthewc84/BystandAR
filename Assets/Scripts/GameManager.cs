@@ -67,7 +67,7 @@ using Photon.Realtime;
     /// </summary>
     public override void OnLeftRoom()
         {
-            SceneManager.LoadScene("Launcher");
+
         }
 
 

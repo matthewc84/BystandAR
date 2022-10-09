@@ -42,7 +42,7 @@ public class SocketClientImages : MonoBehaviour
 
     XRAnchorTransferBatch myAnchorTransferBatch = new XRAnchorTransferBatch();
     bool anchorReceived = false;
-    bool connectedToServer = false;
+    public bool connectedToServer = false;
     MemoryStream tempStream = new MemoryStream();
     int counter = 0;
     public bool queueOpen = true;

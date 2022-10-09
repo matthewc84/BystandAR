@@ -16,7 +16,7 @@ public class GameFunctionality : MonoBehaviourPun
 
 
     #region Private Fields
-
+    GameObject anchorParent;
     #endregion
 
     #region MonoBehaviour CallBacks
@@ -26,12 +26,15 @@ public class GameFunctionality : MonoBehaviourPun
 
 
     #region Public Methods
-
+    void Start()
+    {
+        anchorParent = GameObject.Find("AnchorParent");
+    }
 
 
     public void spawnCube()
     {
-        PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
+        GameObject.Find("Launcher").GetComponent<Launcher>().spawnCube();
     }
 
 
