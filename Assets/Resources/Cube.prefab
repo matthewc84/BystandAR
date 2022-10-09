@@ -11,13 +11,13 @@ GameObject:
   - component: {fileID: 5511386371342413756}
   - component: {fileID: 8055462705012711416}
   - component: {fileID: 2802989093247146517}
-  - component: {fileID: 377302680843739850}
   - component: {fileID: 9058759198169265368}
   - component: {fileID: 8217320343926801748}
   - component: {fileID: -5950923738515077071}
   - component: {fileID: 7674123367273288251}
   - component: {fileID: -4280461937982266922}
-  m_Layer: 0
+  - component: {fileID: -8770337311230783669}
+  m_Layer: 2
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -89,19 +89,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &377302680843739850
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5529296818605364985}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &9058759198169265368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,3 +199,19 @@ MonoBehaviour:
   onHoverExited:
     m_PersistentCalls:
       m_Calls: []
+--- !u!54 &-8770337311230783669
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5529296818605364985}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
