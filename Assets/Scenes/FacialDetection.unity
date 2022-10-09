@@ -555,7 +555,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &161775335
 Transform:
   m_ObjectHideFlags: 0
@@ -1112,7 +1112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea6b8c4ab25d4254c9d747a779683e7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buttonParent: {fileID: 0}
+  buttonParent: {fileID: 914415400}
   _interviewQuestions: {fileID: 1079204891}
   _socketClientImages: {fileID: 1375601348}
   _socketClientDepth: {fileID: 137313571}
@@ -1498,6 +1498,10 @@ PrefabInstance:
       propertyPath: cellHeight
       value: 0.1
       objectReference: {fileID: 0}
+    - target: {fileID: 3475978383513025931, guid: 291a1c812c52ab04d93f34051d5b3ba1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3796300265577369760, guid: 291a1c812c52ab04d93f34051d5b3ba1, type: 3}
       propertyPath: m_text
       value: Start "Interview" (No Logging)
@@ -1589,6 +1593,10 @@ PrefabInstance:
     - target: {fileID: 7764937356005557101, guid: 291a1c812c52ab04d93f34051d5b3ba1, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: ConnectionHUD, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7764937356494358323, guid: 291a1c812c52ab04d93f34051d5b3ba1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7764937357267098910, guid: 291a1c812c52ab04d93f34051d5b3ba1, type: 3}
       propertyPath: m_text
@@ -2052,7 +2060,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &564093433
 Transform:
   m_ObjectHideFlags: 0
@@ -2870,6 +2878,72 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9037006822544638008, guid: 69cac75714a0bb94bb7013747eccaab3, type: 3}
+      propertyPath: m_Text
+      value: 'Who is your hero?
+
+        If you could live anywhere, where would
+        it be?
+
+        What is your biggest fear?
+
+        What is your favorite
+        family vacation?
+
+        What would you change about yourself if you could?
+
+        What
+        really makes you angry?
+
+        What motivates you to work hard?
+
+        What
+        is your favorite thing about your current occupations or academic focus?
+
+        What
+        is your biggest complaint about school?
+
+        What is your proudest accomplishment?
+
+        What
+        is your favorite book to read?
+
+        What makes you laugh the most?
+
+        What
+        was the last movie you went to? What did you think?
+
+        What did you
+        want to be when you were small?
+
+        If you could choose to do anything
+        for a day, what would it be?
+
+        What is your favorite game or sport
+        to watch and play?
+
+        Would you rather ride a bike, ride a horse, or
+        drive a car?
+
+        What would you sing at Karaoke night?
+
+        What
+        two radio stations do you listen to in the car the most?
+
+        Which would
+        you rather do: wash dishes, mow the lawn, clean the bathroom, or vacuum the
+        house?
+
+        If you could hire someone to help you, would it be with cleaning,
+        cooking, or yard work?
+
+        If you could only eat one meal for the rest
+        of your life, what would it be?
+
+        Who is your favorite author?
+
+'
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 69cac75714a0bb94bb7013747eccaab3, type: 3}
 --- !u!1 &648552313
@@ -2909,7 +2983,7 @@ MonoBehaviour:
   frameCaptureInterval: 10
   OffLoadSanitizedFramesToServer: 1
   OffLoadSanitizedFramesToDisk: 0
-  ShowDebugImagesAndDepth: 0
+  ShowDebugImagesAndDepth: 1
   userSpeaking: 0
   logData: 1
   clientSocketImages: {fileID: 1375601348}
@@ -3636,7 +3710,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6893159140959200868, guid: 06b40a114e9f8554b8a7a3e4a0095b1e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 06b40a114e9f8554b8a7a3e4a0095b1e, type: 3}
@@ -3794,7 +3868,7 @@ MonoBehaviour:
   maxGazeCollisionDistance: 10
   raycastLayerMasks:
   - serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 4294967283
   stabilizer:
     storedStabilitySamples: 60
   gazeTransform: {fileID: 0}
@@ -5165,7 +5239,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8512040660396937218, guid: 1ebde48d4132bf24d82900e96ebd6a52, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8512040660396937222, guid: 1ebde48d4132bf24d82900e96ebd6a52, type: 3}
       propertyPath: m_RootOrder

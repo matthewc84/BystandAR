@@ -9,9 +9,14 @@ import io
 import struct
 import base64
 
+# import thread module
+from _thread import *
+import threading
+ 
 
 
-HOST = "192.168.0.40"  # Standard loopback interface address (localhost)
+
+HOST = "128.173.239.212"  # Standard loopback interface address (localhost)
 PORT = 65433  # Port to listen on (non-privileged ports are > 1023)
 
 currentDatetime = datetime.datetime.now()

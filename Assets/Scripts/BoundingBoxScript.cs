@@ -9,19 +9,30 @@ namespace BystandAR
 {
     public class BoundingBoxScript : MonoBehaviour
     {
-        int counter;
+
         public int framesEyeContactMade = 0;
+        public int secondsEyeContactMade = 0;
         public float bboxWidth = 0;
         public float bboxHeight = 0;
         public bool toObscure = true;
         private float initializationTime;
         private FrameSanitizer frameSanitizer;
+        int staleCounter;
+        public int eyegazeCounter;
+        public int totalFrameCounter;
+        public int voiceAndEyeGazeCounter;
+        bool firstTimeEyeGazeContact = true;
+
 
         void Start()
         {
-            counter = 0;
+            staleCounter = 0;
+            eyegazeCounter = 0;
+            voiceAndEyeGazeCounter = 0;
+            totalFrameCounter = 0;
             initializationTime = Time.realtimeSinceStartup;
             frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
+            
 
         }
 
@@ -34,14 +45,20 @@ namespace BystandAR
 
         void Update()
         {
-            counter += 1;
+            staleCounter += 1;
+            totalFrameCounter += 1;
+
             //If object has existed for more than the given threshold without update, we treat it as stale and remove
-            if (counter > 60)
+            if (staleCounter > 60)
             {
                 RemoveDetection();
             }
 
-            if (framesEyeContactMade > 100)
+            float percentEyeAndVoiceContact = (float)voiceAndEyeGazeCounter / (float)totalFrameCounter;
+            float percentEyeContact = (float)eyegazeCounter / (float)totalFrameCounter;
+            //UnityEngine.Debug.Log(percentEyeContact);
+
+            if (percentEyeAndVoiceContact > 0.77f || percentEyeContact > 0.88f)
             {
                 toObscure = false;
             }
@@ -49,15 +66,29 @@ namespace BystandAR
 
         public void EyeContactMade()
         {
+            if (firstTimeEyeGazeContact)
+            {
+                firstTimeEyeGazeContact = false;
+                totalFrameCounter = 0;
+            }
+
             if (frameSanitizer.userSpeaking)
             {
-                framesEyeContactMade += 5;
-                UnityEngine.Debug.Log("Eye and Voice contact!");
+                voiceAndEyeGazeCounter += 1;
+
             }
             else
             {
-                framesEyeContactMade += 1;
+                eyegazeCounter += 1;
+
+
             }
+
+
+        }
+
+        public void EyeContactLost()
+        {
 
 
         }
@@ -72,13 +103,19 @@ namespace BystandAR
                 //UnityEngine.Debug.Log("Collision");
                 if (collision.gameObject.GetComponent<BoundingBoxScript>().initializationTime > this.initializationTime)
                 {
-                    collision.gameObject.GetComponent<BoundingBoxScript>().toObscure = this.toObscure;
-                    collision.gameObject.GetComponent<BoundingBoxScript>().framesEyeContactMade = this.framesEyeContactMade;
-                    RemoveDetection();
+                    //collision.gameObject.GetComponent<BoundingBoxScript>().toObscure = this.toObscure;
+                    //collision.gameObject.GetComponent<BoundingBoxScript>().totalFrameCounter = this.totalFrameCounter;
+                    //collision.gameObject.GetComponent<BoundingBoxScript>().voiceAndEyeGazeCounter = this.voiceAndEyeGazeCounter;
+                    //collision.gameObject.GetComponent<BoundingBoxScript>().eyegazeCounter = this.eyegazeCounter;
+                    staleCounter = 0;
+                    this.gameObject.transform.position = collision.gameObject.transform.position;
+                    this.bboxWidth = collision.gameObject.GetComponent<BoundingBoxScript>().bboxWidth;
+                    this.bboxHeight = collision.gameObject.GetComponent<BoundingBoxScript>().bboxHeight;
+                    collision.gameObject.GetComponent<BoundingBoxScript>().RemoveDetection();
                 }
                 else
                 {
-                    counter = 0;
+                    staleCounter = 0;
                 }
             }
 

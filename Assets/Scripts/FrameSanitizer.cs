@@ -309,8 +309,8 @@ namespace BystandAR
             Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
             var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
             var bboxScript = newObject.GetComponent<BoundingBoxScript>();
-            bboxScript.bboxWidth = (float)face.Width;
-            bboxScript.bboxHeight = (float)face.Height;
+            bboxScript.bboxWidth = (float)face.Width * 1.25f;
+            bboxScript.bboxHeight = (float)face.Height * 1.25f;
         }
  
     }
@@ -376,7 +376,7 @@ namespace BystandAR
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
                     var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
-                    var yCoordDepth = Mathf.Max(288 - ((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F)), 0);
+                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F)), 0);
                     xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
                     yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
                     

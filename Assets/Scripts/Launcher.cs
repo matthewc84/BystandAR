@@ -85,9 +85,10 @@ public class Launcher : MonoBehaviourPunCallbacks
             // we check if we are connected or not, we join if we are , else we initiate the connection to the server.
             if (PhotonNetwork.IsConnected)
             {
-                // #Critical we need at this point to attempt joining a Random Room. If it fails, we'll get notified in OnJoinRandomFailed() and we'll create one.
-                PhotonNetwork.JoinRandomRoom();
-            }
+            // #Critical we need at this point to attempt joining a Random Room. If it fails, we'll get notified in OnJoinRandomFailed() and we'll create one.
+            //PhotonNetwork.JoinRandomRoom();
+            //isConnecting = PhotonNetwork.ConnectUsingSettings();
+        }
             else
             {
             // #Critical, we must first and foremost connect to Photon Online Server.
@@ -108,7 +109,8 @@ public class Launcher : MonoBehaviourPunCallbacks
         if (isConnecting)
         {
             // #Critical: The first we try to do is to join a potential existing room. If there is, good, else, we'll be called back with OnJoinRandomFailed()
-            PhotonNetwork.JoinRandomRoom();
+            //PhotonNetwork.JoinRandomRoom();
+            PhotonNetwork.JoinOrCreateRoom("HardCodedRoom", null, null);
             isConnecting = false;
         }
     }
