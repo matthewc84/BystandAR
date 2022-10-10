@@ -11,10 +11,9 @@ GameObject:
   - component: {fileID: 1448730134523851778}
   - component: {fileID: 2587773284355199284}
   - component: {fileID: 3316409738487591536}
-  - component: {fileID: 6075948631774348486}
   - component: {fileID: -7009120315968318315}
   - component: {fileID: -2716397250255789392}
-  - component: {fileID: 4554467035999218343}
+  - component: {fileID: 693508181973428882}
   m_Layer: 0
   m_Name: FaceCube
   m_TagString: BoundingBox
@@ -31,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 1077441217099968542}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -87,21 +86,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &6075948631774348486
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1077441217099968542}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: 1, y: -1}
-  m_UseGraphicAlpha: 1
 --- !u!114 &-7009120315968318315
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,14 +98,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51bf52072412b04468724f8b21b832c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  framesEyeContactMade: 0
-  secondsEyeContactMade: 0
   bboxWidth: 0
   bboxHeight: 0
   toObscure: 1
-  eyegazeCounter: 0
-  totalFrameCounter: 0
-  voiceAndEyeGazeCounter: 0
+  staleCounter: 0
 --- !u!114 &-2716397250255789392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,7 +125,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: -7009120315968318315}
         m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
-        m_MethodName: EyeContactMade
+        m_MethodName: EyeContactStarted
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -159,8 +139,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: -7009120315968318315}
-        m_TargetAssemblyTypeName: BoundingBoxScript, Assembly-CSharp
-        m_MethodName: EyeContactMade
+        m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
+        m_MethodName: EyeContactMaintained
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -172,7 +152,19 @@ MonoBehaviour:
         m_CallState: 2
   onLookAway:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: -7009120315968318315}
+        m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
+        m_MethodName: EyeContactLost
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onDwell:
     m_PersistentCalls:
       m_Calls: []
@@ -186,7 +178,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   eyeCursorSnapToTargetCenter: 0
---- !u!65 &4554467035999218343
+--- !u!65 &693508181973428882
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -197,5 +189,5 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.99999994, y: 0.99999994, z: 0.99999994}
   m_Center: {x: 0, y: 0, z: 0}

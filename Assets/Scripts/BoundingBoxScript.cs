@@ -10,43 +10,52 @@ namespace BystandAR
     public class BoundingBoxScript : MonoBehaviour
     {
 
-        public int framesEyeContactMade = 0;
-        public int secondsEyeContactMade = 0;
         public float bboxWidth = 0;
         public float bboxHeight = 0;
         public bool toObscure = true;
-        private float initializationTime;
         private FrameSanitizer frameSanitizer;
-        int staleCounter;
-        public int eyegazeCounter;
-        public int totalFrameCounter;
-        public int voiceAndEyeGazeCounter;
+        public int staleCounter;
+        
         bool firstTimeEyeGazeContact = true;
+        Stopwatch eyeGazeStopwatch;
+        public Stopwatch detectionStopwatch;
+        long voiceAndEyeGazeCounter;
+        long totalEyeGazeTime;
+        long totalVoiceAndEyeGazeTime;
+        long eyeGazeCounter;
+        float percentEyeAndVoiceContact;
+        float percentEyeContact;
 
 
         void Start()
         {
+
+            eyeGazeStopwatch = new Stopwatch();
+            detectionStopwatch = new Stopwatch();
             staleCounter = 0;
-            eyegazeCounter = 0;
             voiceAndEyeGazeCounter = 0;
-            totalFrameCounter = 0;
-            initializationTime = Time.realtimeSinceStartup;
+            totalEyeGazeTime = 0;
+            totalVoiceAndEyeGazeTime = 0;
+            eyeGazeCounter = 0;
+            percentEyeAndVoiceContact = 0;
+            percentEyeContact = 0;
+            detectionStopwatch.Start();
+            eyeGazeStopwatch.Start();
             frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
             
 
         }
 
 
-        void RemoveDetection()
+        public void RemoveDetection()
         {
 
-            Destroy(gameObject);
+            Destroy(this.gameObject);
         }
 
         void Update()
         {
             staleCounter += 1;
-            totalFrameCounter += 1;
 
             //If object has existed for more than the given threshold without update, we treat it as stale and remove
             if (staleCounter > 60)
@@ -54,33 +63,42 @@ namespace BystandAR
                 RemoveDetection();
             }
 
-            float percentEyeAndVoiceContact = (float)voiceAndEyeGazeCounter / (float)totalFrameCounter;
-            float percentEyeContact = (float)eyegazeCounter / (float)totalFrameCounter;
-            //UnityEngine.Debug.Log(percentEyeContact);
+            if(detectionStopwatch.ElapsedMilliseconds > 0)
+            {
+                percentEyeAndVoiceContact = (float)(totalVoiceAndEyeGazeTime + voiceAndEyeGazeCounter) / (float)detectionStopwatch.ElapsedMilliseconds;
+                percentEyeContact = (float)(totalEyeGazeTime + eyeGazeCounter) / (float)detectionStopwatch.ElapsedMilliseconds;
+                //UnityEngine.Debug.Log(percentEyeContact.ToString("F6"));
+            }
 
-            if (percentEyeAndVoiceContact > 0.77f || percentEyeContact > 0.88f)
+            if (percentEyeAndVoiceContact > 0.30f || percentEyeContact > 0.50f)
             {
                 toObscure = false;
             }
         }
 
-        public void EyeContactMade()
+        public void EyeContactStarted()
         {
-            if (firstTimeEyeGazeContact)
-            {
-                firstTimeEyeGazeContact = false;
-                totalFrameCounter = 0;
-            }
+            eyeGazeStopwatch.Restart();
+            //UnityEngine.Debug.Log("Eye Gaze Started");
+
+        }
+
+        public void EyeContactMaintained()
+        {
 
             if (frameSanitizer.userSpeaking)
             {
-                voiceAndEyeGazeCounter += 1;
+                //voiceAndEyeGazeCounter += 1;
+                voiceAndEyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
+                eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
+                //UnityEngine.Debug.Log("Eye Gaze Continues");
 
             }
             else
             {
-                eyegazeCounter += 1;
-
+                //eyegazeCounter += 1;
+                eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
+                //UnityEngine.Debug.Log(eyeGazeCounter);
 
             }
 
@@ -89,8 +107,14 @@ namespace BystandAR
 
         public void EyeContactLost()
         {
-
-
+            eyeGazeStopwatch.Stop();
+            voiceAndEyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
+            eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
+            totalVoiceAndEyeGazeTime += voiceAndEyeGazeCounter;
+            totalEyeGazeTime += eyeGazeCounter;
+            eyeGazeCounter = 0;
+            voiceAndEyeGazeCounter = 0;
+            //UnityEngine.Debug.Log("Eye Gaze Stops");
         }
 
 
@@ -100,22 +124,18 @@ namespace BystandAR
         {
             if (collision.gameObject.tag == "BoundingBox")
             {
-                //UnityEngine.Debug.Log("Collision");
-                if (collision.gameObject.GetComponent<BoundingBoxScript>().initializationTime > this.initializationTime)
+                UnityEngine.Debug.Log("Collision");
+                if (collision.gameObject.GetComponent<BoundingBoxScript>().detectionStopwatch.ElapsedMilliseconds < this.detectionStopwatch.ElapsedMilliseconds)
                 {
-                    //collision.gameObject.GetComponent<BoundingBoxScript>().toObscure = this.toObscure;
-                    //collision.gameObject.GetComponent<BoundingBoxScript>().totalFrameCounter = this.totalFrameCounter;
-                    //collision.gameObject.GetComponent<BoundingBoxScript>().voiceAndEyeGazeCounter = this.voiceAndEyeGazeCounter;
-                    //collision.gameObject.GetComponent<BoundingBoxScript>().eyegazeCounter = this.eyegazeCounter;
                     staleCounter = 0;
                     this.gameObject.transform.position = collision.gameObject.transform.position;
                     this.bboxWidth = collision.gameObject.GetComponent<BoundingBoxScript>().bboxWidth;
                     this.bboxHeight = collision.gameObject.GetComponent<BoundingBoxScript>().bboxHeight;
-                    collision.gameObject.GetComponent<BoundingBoxScript>().RemoveDetection();
+                    Destroy(collision.gameObject);
                 }
                 else
                 {
-                    staleCounter = 0;
+                    //staleCounter = 0;
                 }
             }
 

@@ -126,7 +126,7 @@ namespace BystandAR
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
-            StartCoroutine(FramerateCountLoop());
+           // StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
             clientSocketImagesScript = clientSocketImages.GetComponent<SocketClientImages>();
@@ -307,10 +307,23 @@ namespace BystandAR
             float estimatedFaceDepth = averagePixelsForFaceAt1Meter / (float)face.Width;
             Vector3 targetPositionInCameraSpace = normalizedVector * estimatedFaceDepth;
             Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
-            var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
-            var bboxScript = newObject.GetComponent<BoundingBoxScript>();
-            bboxScript.bboxWidth = (float)face.Width * 1.25f;
-            bboxScript.bboxHeight = (float)face.Height * 1.25f;
+                var overlapBoxes = Physics.OverlapBox(bestRectPositionInWorldspace, objectOutlineCube.transform.localScale / 2, Quaternion.identity);
+                if(overlapBoxes.Length > 0 && overlapBoxes[0].gameObject.tag == "BoundingBox")
+                {
+                    overlapBoxes[0].gameObject.transform.position = bestRectPositionInWorldspace;
+                    var bboxScript = overlapBoxes[0].gameObject.GetComponent<BoundingBoxScript>();
+                    bboxScript.staleCounter = 0;
+                    bboxScript.bboxWidth = (float)face.Width * 1.25f;
+                    bboxScript.bboxHeight = (float)face.Height * 1.25f;
+                }
+                else
+                {
+                    var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
+                    var bboxScript = newObject.GetComponent<BoundingBoxScript>();
+                    bboxScript.bboxWidth = (float)face.Width * 1.25f;
+                    bboxScript.bboxHeight = (float)face.Height * 1.25f;
+                }
+
         }
  
     }
@@ -376,12 +389,12 @@ namespace BystandAR
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
                     var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
-                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F)), 0);
+                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
                     xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
                     yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
                     
                     var scaledDepthBoxWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageWidthRatio), 320f);
-                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio), 288f);
+                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio) * 3, 288f);
 
 
                     float scaledImageHeight;
