@@ -21,26 +21,31 @@ using Windows.Graphics.Imaging;
 using Windows.Devices.Enumeration;
 using Windows.System;
 using Windows.Perception.Spatial;
-
-
-public class Frame : IDisposable
-{
-    public SpatialCoordinateSystem spatialCoordinateSystem;
-    public CameraIntrinsics cameraIntrinsics;
-    public SoftwareBitmap bitmap;
-
-    public void Dispose()
-    {
-        bitmap.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-}
 #endif
 
-public class MediaCaptureUtility
+namespace BystandAR
 {
-    public bool IsCapturing { get; set; }
+    public class Frame : IDisposable
+    {
+#if ENABLE_WINMD_SUPPORT
+        public SpatialCoordinateSystem spatialCoordinateSystem;
+        public CameraIntrinsics cameraIntrinsics;
+        public SoftwareBitmap bitmap;
+#endif
+
+        public void Dispose()
+        {
+#if ENABLE_WINMD_SUPPORT
+            bitmap.Dispose();
+            GC.SuppressFinalize(this);
+#endif
+        }
+
+    }
+
+        public class MediaCaptureUtility
+    {
+        public bool IsCapturing { get; set; }
 
 #if ENABLE_WINMD_SUPPORT
     private MediaCapture _mediaCapture;
@@ -49,8 +54,8 @@ public class MediaCaptureUtility
     private Frame _videoFrame = null;
 #endif
 
-    public async Task InitializeMediaFrameReaderAsync()
-    {
+        public async Task InitializeMediaFrameReaderAsync()
+        {
 #if ENABLE_WINMD_SUPPORT
         // Check state of media capture object 
         if (_mediaCapture == null || _mediaCapture.CameraStreamState == CameraStreamState.Shutdown || _mediaCapture.CameraStreamState == CameraStreamState.NotStreaming)
@@ -120,7 +125,7 @@ public class MediaCaptureUtility
             IsCapturing = true;
         }
 #endif
-    }
+        }
 
 #if ENABLE_WINMD_SUPPORT
 
@@ -202,12 +207,12 @@ public class MediaCaptureUtility
 
 #endif
 
-    /// <summary>
-    /// Asynchronously stop media capture and dispose of resources
-    /// </summary>
-    /// <returns></returns>
-    public async Task OnDestroy()
-    {
+        /// <summary>
+        /// Asynchronously stop media capture and dispose of resources
+        /// </summary>
+        /// <returns></returns>
+        public async Task OnDestroy()
+        {
 #if ENABLE_WINMD_SUPPORT
         if (_mediaCapture != null && _mediaCapture.CameraStreamState != CameraStreamState.Shutdown)
         {
@@ -218,7 +223,7 @@ public class MediaCaptureUtility
         }
         IsCapturing = false;
 #endif
-    }
+        }
 
 #if ENABLE_WINMD_SUPPORT
     unsafe private float ProcessAudioFrame(AudioMediaFrame audioMediaFrame, float[] buffer, int length, int numChannels)
@@ -278,4 +283,6 @@ public class MediaCaptureUtility
     }
 #endif
 
+    }
 }
+

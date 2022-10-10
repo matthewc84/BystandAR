@@ -24,35 +24,42 @@ using Windows.Graphics.Imaging;
 using Windows.Foundation;
 using Windows.Media.FaceAnalysis;
 
-public class CustomModelOutput
-{
-    public DetectedFaces returnFaces { get; set; }
-    public Frame returnFrame { get; set; }
-}
-
-public class DetectedFaces
-{
-    public Rect[] Faces { get; set; }
-}
-
 #endif
 
-public class Rect
-{
-    public float X { get; set; }
-    public float Y { get; set; }
-    public float Width { get; set; }
-    public float Height { get; set; }
-}
 
-public class NetworkModel : MonoBehaviour
+
+namespace BystandAR 
 {
 
-#if ENABLE_WINMD_SUPPORT
+    public class CustomModelOutput
+    {
+        public DetectedFaces returnFaces { get; set; }
+        public Frame returnFrame { get; set; }
+    }
+
+    public class DetectedFaces
+    {
+        public Rect[] Faces { get; set; }
+    }
+
+
+
+    public class Rect
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Width { get; set; }
+        public float Height { get; set; }
+    }
+
+    public class NetworkModel : MonoBehaviour
+    {
+
+    #if ENABLE_WINMD_SUPPORT
     FaceDetector detector;
-#endif
+    #endif
 
-#if ENABLE_WINMD_SUPPORT
+    #if ENABLE_WINMD_SUPPORT
 
 
     public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)
@@ -75,8 +82,8 @@ public class NetworkModel : MonoBehaviour
 
     }
 
-   private async Task<DetectedFaces> EvaluateFrame(SoftwareBitmap bitmap)
-   {
+    private async Task<DetectedFaces> EvaluateFrame(SoftwareBitmap bitmap)
+    {
 			if (detector == null)
             {
                 detector = await FaceDetector.CreateAsync();
@@ -106,9 +113,11 @@ public class NetworkModel : MonoBehaviour
 			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
 			};
 
-   }
+    }
 
 
-#endif
+    #endif
 
+    }
 }
+

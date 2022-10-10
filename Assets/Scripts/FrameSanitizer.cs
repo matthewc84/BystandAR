@@ -61,38 +61,50 @@ public static class NumericsConversionExtensions
 
 #endregion
 
-public class SanitizedFrames
+namespace BystandAR
 {
-    public byte[] sanitizedDepthFrame { get; set; }
-    public Texture2D sanitizedImageFrame { get; set; }
+    public class SanitizedFrames
+    {
+        public byte[] sanitizedDepthFrame { get; set; }
+        public Texture2D sanitizedImageFrame { get; set; }
 
-}
+    }
 
-[RequireComponent(typeof(AudioSource))]
-public class FrameSanitizer : MonoBehaviour
-{
-    // Public fields
-    public GameObject objectOutlineCube;
-    public GameObject imagePreviewPlane;
-    public GameObject longDepthPreviewPlane;
-    public int samplingInterval;
-    public GameObject clientSocket;
-    public bool OffLoadSanitizedFramesToServer;
-    public bool userSpeaking;
+    [RequireComponent(typeof(AudioSource))]
+    public class FrameSanitizer : MonoBehaviour
+    {
+        // Public fields
+        public GameObject objectOutlineCube;
+        public GameObject imagePreviewPlane;
+        public GameObject longDepthPreviewPlane;
+        public int samplingInterval;
+        public int frameCaptureInterval;
+        public bool OffLoadSanitizedFramesToServer;
+        public bool OffLoadSanitizedFramesToDisk;
+        public bool ShowDebugImagesAndDepth;
+        public bool userSpeaking;
+        public bool logData = true;
+        public GameObject clientSocketImages;
+        public GameObject clientSocketDepth;
 
 
-    // Private fields
-    private NetworkModel _networkModel;
-    private bool _isRunning = false;
-    private byte[] depthData = null;
-    byte[] sanitizedDepthFrameByteArray = null;
-    private Material imageMediaMaterial = null;
-    private Texture2D imageMediaTexture = null;
-    private Material longDepthMediaMaterial = null;
-    private Texture2D longDepthMediaTexture = null;
-    private Texture2D tempImageTexture;
-    private MediaCaptureUtility _mediaCaptureUtility;
-    private float averageAmplitude = 0.0f;
+        // Private fields
+        private NetworkModel _networkModel;
+        private bool _isRunning = false;
+        private byte[] depthData = null;
+        byte[] sanitizedDepthFrameByteArray = null;
+        private Material imageMediaMaterial = null;
+        private Texture2D imageMediaTexture = null;
+        private Material longDepthMediaMaterial = null;
+        private Texture2D longDepthMediaTexture = null;
+        private Texture2D tempImageTexture;
+        private MediaCaptureUtility _mediaCaptureUtility;
+        private float averageAmplitude = 0.0f;
+        private SocketClientImages clientSocketImagesScript = null;
+        private SocketClientDepth clientSocketDepthScript = null;
+
+
+
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -101,21 +113,24 @@ public class FrameSanitizer : MonoBehaviour
 
 #endif
 
-    int counter;
-    Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
-    float averageFaceWidthInMeters = 0.15f;
-    float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
+        int samplingCounter;
+        int frameCaptureCounter = 0;
+        Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
+        float averageFaceWidthInMeters = 0.15f;
+        float averageHumanHeightToFaceRatio = 2.0f / 0.15f;
 
-    #region UnityMethods
+        #region UnityMethods
 
-    async void Start()
-    {
-        userSpeaking = false;
-        eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
-        counter = samplingInterval;
-        StartCoroutine(FramerateCountLoop());
-        //create temp texture to apply SoftwareBitmap to, in order to sanitize
-        tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+        async void Start()
+        {
+            userSpeaking = false;
+            eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
+            samplingCounter = samplingInterval;
+           // StartCoroutine(FramerateCountLoop());
+            //create temp texture to apply SoftwareBitmap to, in order to sanitize
+            tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+            clientSocketImagesScript = clientSocketImages.GetComponent<SocketClientImages>();
+            clientSocketDepthScript = clientSocketDepth.GetComponent<SocketClientDepth>();
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -177,21 +192,23 @@ public class FrameSanitizer : MonoBehaviour
 
         
 #endif
-    }
 
-    async void Update()
-    {
+        }
+
+        async void Update()
+        {
 
 #if ENABLE_WINMD_SUPPORT
-        counter += 1;
+        samplingCounter += 1;
+        frameCaptureCounter += 1;
 
         if (_mediaCaptureUtility.IsCapturing)
         {
-           //var clientSocketScript = clientSocket.GetComponent<SocketClient>();
+
             var returnFrame = await _mediaCaptureUtility.GetLatestVideoFrame();
 
             //evaluate the average amplitude of the collected voice input mic
-            if(averageAmplitude > 0.01f)
+            if(averageAmplitude > 0.005f)
             {
                 userSpeaking = true;
             }
@@ -206,23 +223,32 @@ public class FrameSanitizer : MonoBehaviour
             {
                 var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
 
-                if(OffLoadSanitizedFramesToServer)
+
+                if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && clientSocketImages.activeSelf && clientSocketDepth.activeSelf 
+                    && clientSocketImagesScript.connectedToServer&& clientSocketDepthScript.connectedToServer)
                 {
-                    //clientSocketScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToPNG());
+                    frameCaptureCounter = 0;
+                    clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                    clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
 
                 }
 
+
+                if(ShowDebugImagesAndDepth)
+                {
+                    if (sanitizedFrame.sanitizedDepthFrame != null)
+                    {
+                        DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
+                    }
+
+                    DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
+                }
                 
-                if (sanitizedFrame.sanitizedDepthFrame != null)
-                {
-                    DisplayDepthOnQuad(sanitizedFrame.sanitizedDepthFrame);
-                }
 
-                DisplayImageOnQuad(sanitizedFrame.sanitizedImageFrame);
 
-                if (counter >= samplingInterval)
+                if (samplingCounter >= samplingInterval)
                 {
-                    counter = 0;
+                    samplingCounter = 0;
 
                     Task thread = Task.Run(async () =>
                     {
@@ -253,9 +279,9 @@ public class FrameSanitizer : MonoBehaviour
             
         }
 #endif
-    }
+        }
 
-    #endregion
+        #endregion
 
 
 
@@ -281,10 +307,23 @@ public class FrameSanitizer : MonoBehaviour
             float estimatedFaceDepth = averagePixelsForFaceAt1Meter / (float)face.Width;
             Vector3 targetPositionInCameraSpace = normalizedVector * estimatedFaceDepth;
             Vector3 bestRectPositionInWorldspace = unityCameraToWorld.MultiplyPoint(targetPositionInCameraSpace);
-            var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
-            var bboxScript = newObject.GetComponent<BoundingBoxScript>();
-            bboxScript.bboxWidth = (float)face.Width;
-            bboxScript.bboxHeight = (float)face.Height;
+                var overlapBoxes = Physics.OverlapBox(bestRectPositionInWorldspace, objectOutlineCube.transform.localScale / 2, Quaternion.identity);
+                if(overlapBoxes.Length > 0 && overlapBoxes[0].gameObject.tag == "BoundingBox")
+                {
+                    overlapBoxes[0].gameObject.transform.position = bestRectPositionInWorldspace;
+                    var bboxScript = overlapBoxes[0].gameObject.GetComponent<BoundingBoxScript>();
+                    bboxScript.staleCounter = 0;
+                    bboxScript.bboxWidth = (float)face.Width * 1.25f;
+                    bboxScript.bboxHeight = (float)face.Height * 1.25f;
+                }
+                else
+                {
+                    var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
+                    var bboxScript = newObject.GetComponent<BoundingBoxScript>();
+                    bboxScript.bboxWidth = (float)face.Width * 1.25f;
+                    bboxScript.bboxHeight = (float)face.Height * 1.25f;
+                }
+
         }
  
     }
@@ -316,7 +355,6 @@ public class FrameSanitizer : MonoBehaviour
 
     private SanitizedFrames SanitizeFrame(ref Frame returnFrame, ref byte[] depthFrame){
 
-
         byte[] depthBytesWithoutBystanders = null;
         byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
         returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
@@ -339,43 +377,46 @@ public class FrameSanitizer : MonoBehaviour
         foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
         {
             var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
-            //Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            //Collider objCollider =  face.GetComponent<Collider>();
-            Vector3 reletiveNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
-            float dot = Vector3.Dot(reletiveNormalizedPos, Camera.main.transform.forward);
+            Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
+            float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
             float angle = Mathf.Acos(dot);
 
-            //if (boundingBoxScript.toObscure && TestPlanesAABB(planes, objCollider.bounds))
-            //if (boundingBoxScript.toObscure && face.GetComponent<Renderer>().isVisible)
-            if (boundingBoxScript.toObscure && angle < 0.60F)
+            if (boundingBoxScript.toObscure && angle < 0.62F)
             {
                 var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
                 UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
                 Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
-                    var xCoordDepth = (float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F);
-                    var yCoordDepth = (float)(projected2DPoint.Y * depthToImageHeightRatio) + (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F);
-                    var scaledDepthHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio), 288f);
-                    var scaledDepthWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageHeightRatio), 320f);
+                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
+                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
+                    xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
+                    yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
+                    
+                    var scaledDepthBoxWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageWidthRatio), 320f);
+                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio) * 3, 288f);
+
 
                     float scaledImageHeight;
                     float scaledImageWidth;
-                    var xCoordImage = (float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F);
-                    var yCoordImage = (float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F);
 
-                    if((xCoordImage + boundingBoxScript.bboxWidth) > 1280f)
+                    var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
+                    var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
+                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, 1280f);
+                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, 720f);
+                    if((xCoordImage + boundingBoxScript.bboxWidth) >= 1280f)
                     {
-                        scaledImageWidth = boundingBoxScript.bboxWidth - (xCoordImage + boundingBoxScript.bboxWidth - 1280f);
+                        scaledImageWidth = (1280 - xCoordImage);
                     }
                     else
                     {
                         scaledImageWidth = boundingBoxScript.bboxWidth;
                     }
 
-                    if((yCoordImage + boundingBoxScript.bboxHeight) > 720f)
+                    if((yCoordImage + boundingBoxScript.bboxHeight) >= 720f)
                     {
-                        scaledImageHeight = boundingBoxScript.bboxHeight - (yCoordImage + boundingBoxScript.bboxHeight - 720f);
+
+                        scaledImageHeight = (720 - yCoordImage);
                     }
                     else
                     {
@@ -385,16 +426,15 @@ public class FrameSanitizer : MonoBehaviour
                 if(depthFrame != null)
                 {
 
-                    for (uint rows = (uint)yCoordDepth; rows < scaledDepthHeight; rows++)
+                    for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
                     {
-                        for (uint columns = (uint)xCoordDepth; columns < scaledDepthWidth; columns++)
+                        for (uint columns = (uint)xCoordDepth; columns < scaledDepthBoxWidth; columns++)
                         {
                             depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
                         }
                     }
 
                 }
-
 
                 Color[] colors = new Color[(int)scaledImageWidth * (int)scaledImageHeight];
                 tempImageTexture.SetPixels((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
@@ -408,45 +448,27 @@ public class FrameSanitizer : MonoBehaviour
     }
 
 #endif
-    IEnumerator FramerateCountLoop()
-    {
-        while (true)
+        IEnumerator FramerateCountLoop()
         {
-            yield return new WaitForSeconds(15);
-            Debug.Log("Current Frame Rate: " + (int)(1.0f / Time.smoothDeltaTime));
-        }
-    }
-
-    private void DisplayImageOnQuad(Texture2D inputImage)
-    {
-        Graphics.CopyTexture(inputImage, imageMediaTexture);
-        imageMediaTexture.Apply();
-    }
-
-    private void DisplayDepthOnQuad(byte[] longDepthFrameData)
-    {
-        longDepthMediaTexture.LoadRawTextureData(longDepthFrameData);
-        longDepthMediaTexture.Apply();
-    }
-
-
-    //From: https://forum.unity.com/threads/managed-version-of-geometryutility-testplanesaabb.473575/
-    public bool TestPlanesAABB(Plane[] planes, Bounds bounds)
-
-    {
-        for (int i = 0; i < planes.Length; i++)
-        {
-            Plane plane = planes[i];
-            float3 normal_sign = math.sign(plane.normal);
-            float3 test_point = (float3)(bounds.center) + (bounds.extents * normal_sign);
-
-            float dot = math.dot(test_point, plane.normal);
-            if (dot + plane.distance < 0)
-                return false;
+            while (true)
+            {
+                yield return new WaitForSeconds(15);
+                Debug.Log("Current Frame Rate: " + (int)(1.0f / Time.smoothDeltaTime));
+            }
         }
 
-        return true;
-    }
+        private void DisplayImageOnQuad(Texture2D inputImage)
+        {
+            Graphics.CopyTexture(inputImage, imageMediaTexture);
+            imageMediaTexture.Apply();
+        }
+
+        private void DisplayDepthOnQuad(byte[] longDepthFrameData)
+        {
+            longDepthMediaTexture.LoadRawTextureData(longDepthFrameData);
+            longDepthMediaTexture.Apply();
+        }
+
 
 #if ENABLE_WINMD_SUPPORT
     private void OnAudioFilterRead(float[] buffer, int numChannels)
@@ -473,4 +495,7 @@ public class FrameSanitizer : MonoBehaviour
         averageAmplitude = Mathf.Abs(Mathf.Clamp(returnFloat, -1.0f, 1.0f));
     }
 #endif
+    }
 }
+
+ 
