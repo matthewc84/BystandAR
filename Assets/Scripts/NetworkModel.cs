@@ -55,11 +55,11 @@ namespace BystandAR
     public class NetworkModel : MonoBehaviour
     {
 
-    #if ENABLE_WINMD_SUPPORT
+#if ENABLE_WINMD_SUPPORT
     FaceDetector detector;
-    #endif
+#endif
 
-    #if ENABLE_WINMD_SUPPORT
+#if ENABLE_WINMD_SUPPORT
 
 
     public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)
@@ -87,6 +87,7 @@ namespace BystandAR
 			if (detector == null)
             {
                 detector = await FaceDetector.CreateAsync();
+                detector.MinDetectableFaceSize = new BitmapSize(){Height = 10, Width = 10};
             }
 
             var allFormats = FaceDetector.GetSupportedBitmapPixelFormats();
@@ -116,7 +117,7 @@ namespace BystandAR
     }
 
 
-    #endif
+#endif
 
     }
 }

@@ -23,6 +23,7 @@ public class ConnectionHUD : MonoBehaviour
     public GameObject _spawnCube;
     public GameObject _launcher;
     public GameObject _gameManager;
+    public GameObject _anchorManager;
 
 
 
@@ -41,8 +42,10 @@ public class ConnectionHUD : MonoBehaviour
     {
         _spawnCube.SetActive(true);
         _launcher.SetActive(true);
+        //_anchorManager.SetActive(true);
         _gameManager.SetActive(true);
         buttonParent.SetActive(false);
+
     }
 
     public void startInterviewLoggingPressed()
@@ -55,12 +58,16 @@ public class ConnectionHUD : MonoBehaviour
 
     public void startBlocksLoggingPressed()
     {
-        _socketClientImages.SetActive(true);
-        _socketClientDepth.SetActive(true);
+
+       // _anchorManager.SetActive(true);
         _spawnCube.SetActive(true);
         _launcher.SetActive(true);
         _gameManager.SetActive(true);
         buttonParent.SetActive(false);
+
+
+        //_socketClientImages.SetActive(true);
+        //_socketClientDepth.SetActive(true);
     }
 
 

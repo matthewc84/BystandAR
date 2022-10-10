@@ -87,7 +87,7 @@ public class Launcher : MonoBehaviourPunCallbacks
             {
             // #Critical we need at this point to attempt joining a Random Room. If it fails, we'll get notified in OnJoinRandomFailed() and we'll create one.
             //PhotonNetwork.JoinRandomRoom();
-            //isConnecting = PhotonNetwork.ConnectUsingSettings();
+            isConnecting = PhotonNetwork.ConnectUsingSettings();
         }
             else
             {
@@ -136,14 +136,23 @@ public class Launcher : MonoBehaviourPunCallbacks
         // #Critical
         // Load the Room Level.
         var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        player.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
+        player.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
 
     }
 
     public void spawnCube()
     {
         GameObject newCube = PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, .5f), Quaternion.identity);
-        //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
+        if (PhotonNetwork.IsMasterClient)
+        {
+            newCube.GetComponent<MeshRenderer>().material.color = Color.green;
+            //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+        }
+        else
+        {
+            newCube.GetComponent<MeshRenderer>().material.color = Color.red;
+            //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+        }
     }
 
     #endregion

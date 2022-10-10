@@ -1123,6 +1123,7 @@ MonoBehaviour:
   _spawnCube: {fileID: 578790511}
   _launcher: {fileID: 468845223}
   _gameManager: {fileID: 159357039}
+  _anchorManager: {fileID: 2019584251}
 --- !u!1001 &223974226
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1720,6 +1721,7 @@ MonoBehaviour:
   _spawnCube: {fileID: 578790511}
   _launcher: {fileID: 468845223}
   _gameManager: {fileID: 159357039}
+  _anchorManager: {fileID: 2019584251}
 --- !u!1 &539855672
 GameObject:
   m_ObjectHideFlags: 0
@@ -2633,6 +2635,7 @@ MonoBehaviour:
   _spawnCube: {fileID: 578790511}
   _launcher: {fileID: 468845223}
   _gameManager: {fileID: 159357039}
+  _anchorManager: {fileID: 2019584251}
 --- !u!1 &619749489
 GameObject:
   m_ObjectHideFlags: 0
@@ -5025,6 +5028,100 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2009321216}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2019584251
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2019584256}
+  - component: {fileID: 2019584255}
+  - component: {fileID: 2019584254}
+  - component: {fileID: 2019584253}
+  - component: {fileID: 2019584252}
+  m_Layer: 0
+  m_Name: AzureSpatialAnchors
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2019584252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2019584251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 728ad7fae8e460a4ba41265c7308d757, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AnchorPrefab: {fileID: 0}
+--- !u!114 &2019584253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2019584251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 520bb47c46cf8624fafb307b7d1b862a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Camera: {fileID: 963194227}
+--- !u!114 &2019584254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2019584251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ef4e40d29b7a564f86f3d2f0abca194, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  authenticationMode: 0
+  spatialAnchorsAccountId: 9941bafc-e9ae-4b3e-bc46-fb3a52adf1b9
+  spatialAnchorsAccountKey: rgsH5JEAEvzDb5eV9iqHAnolWHcRm7juInpwP06JOXs=
+  spatialAnchorsAccountDomain: eastus.mixedreality.azure.com
+  clientId: 
+  tenantId: 
+  logLevel: 5
+--- !u!114 &2019584255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2019584251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeb0943c30f7cac4fa8dc7709794c480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  anchorIdentifier: 
+  retrievingAnchor: 0
+--- !u!4 &2019584256
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2019584251}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 17
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2021764886
 GameObject:
   m_ObjectHideFlags: 0
@@ -5230,6 +5327,7 @@ MonoBehaviour:
   _spawnCube: {fileID: 578790511}
   _launcher: {fileID: 468845223}
   _gameManager: {fileID: 159357039}
+  _anchorManager: {fileID: 2019584251}
 --- !u!1001 &8512040661209991513
 PrefabInstance:
   m_ObjectHideFlags: 0

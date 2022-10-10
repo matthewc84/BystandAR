@@ -224,14 +224,23 @@ namespace BystandAR
                 var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
 
 
-                if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && clientSocketImages.activeSelf && clientSocketDepth.activeSelf 
-                    && clientSocketImagesScript.connectedToServer&& clientSocketDepthScript.connectedToServer)
+                if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && ((clientSocketImages.activeSelf && clientSocketDepth.activeSelf 
+                    && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer) || (GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null && GameObject.Find("SocketClientImages(Clone)").GetComponent<SocketClientImages>().connectedToServer && GameObject.Find("SocketClientDepth(Clone)").GetComponent<SocketClientDepth>().connectedToServer)))
                 {
                     frameCaptureCounter = 0;
-                    clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
-                    clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
+                        if(GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null)
+                        {
+                            GameObject.Find("SocketClientImages(Clone)").GetComponent<SocketClientImages>().inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                            GameObject.Find("SocketClientDepth(Clone)").GetComponent<SocketClientDepth>().inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
+                        }
+                        else
+                        {
+                            clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                            clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
 
-                }
+                        }
+
+                    }
 
 
                 if(ShowDebugImagesAndDepth)
@@ -442,7 +451,75 @@ namespace BystandAR
             }
         }
 
-        tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
+            foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBoxHL2User"))
+            {
+                var boundingBoxScript = face.GetComponent<PlayerBoundingBoxScript>();
+                Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
+                float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
+                float angle = Mathf.Acos(dot);
+
+                if (boundingBoxScript.toObscure && angle < 0.62F)
+                {
+                    var worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
+                    UnityEngine.Matrix4x4 unityWorldToCamera = NumericsConversionExtensions.ToUnity(worldToCamera);
+                    Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
+                    Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
+
+                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
+                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
+                    xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
+                    yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
+
+                    var scaledDepthBoxWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageWidthRatio), 320f);
+                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio) * 3, 288f);
+
+
+                    float scaledImageHeight;
+                    float scaledImageWidth;
+
+                    var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
+                    var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
+                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, 1280f);
+                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, 720f);
+                    if ((xCoordImage + boundingBoxScript.bboxWidth) >= 1280f)
+                    {
+                        scaledImageWidth = (1280 - xCoordImage);
+                    }
+                    else
+                    {
+                        scaledImageWidth = boundingBoxScript.bboxWidth;
+                    }
+
+                    if ((yCoordImage + boundingBoxScript.bboxHeight) >= 720f)
+                    {
+
+                        scaledImageHeight = (720 - yCoordImage);
+                    }
+                    else
+                    {
+                        scaledImageHeight = boundingBoxScript.bboxHeight;
+                    }
+
+                    if (depthFrame != null)
+                    {
+
+                        for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
+                        {
+                            for (uint columns = (uint)xCoordDepth; columns < scaledDepthBoxWidth; columns++)
+                            {
+                                depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
+                            }
+                        }
+
+                    }
+
+                    Color[] colors = new Color[(int)scaledImageWidth * (int)scaledImageHeight];
+                    tempImageTexture.SetPixels((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
+
+                }
+            }
+
+            tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
         tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
         return tempSanitizedFrames;
     }

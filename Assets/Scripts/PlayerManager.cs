@@ -11,6 +11,8 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
 
     [Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
     public static GameObject LocalPlayerInstance;
+    public GameObject clientPrefabImages;
+    public GameObject clientPrefabDepth;
     string identifier = null;
 
     // Start is called before the first frame update
@@ -19,7 +21,7 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
     /// <summary>
     /// MonoBehaviour method called on GameObject by Unity during early initialization phase.
     /// </summary>
-    async public void Awake()
+   void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
         // #Important
@@ -29,7 +31,13 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
             LocalPlayerInstance = gameObject;
         }
 
-      /*  if (PhotonNetwork.IsMasterClient && photonView.IsMine)
+
+    }
+
+    async void Start()
+    {
+
+        if (PhotonNetwork.IsMasterClient && photonView.IsMine)
         {
             identifier = await GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>().createAnchor();
             while (identifier == null)
@@ -40,16 +48,10 @@ public class PlayerManager : MonoBehaviourPunCallbacks, IPunObservable
 
             Debug.Log("Anchor Created");
 
-        }*/
 
-
-        
-
-
-
-        // #Critical
-        // we flag as don't destroy on load so that instance survives level synchronization, thus giving a seamless experience when levels load.
-
+            Instantiate(clientPrefabImages);
+            Instantiate(clientPrefabDepth);
+        }
     }
 
     #endregion
