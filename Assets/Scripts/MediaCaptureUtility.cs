@@ -108,6 +108,7 @@ namespace BystandAR
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
             BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
+            //BitmapSize outputSize = new BitmapSize { Width = 1920, Height = 1080};
 
             _imageMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(imageFrameSourcePair.Value, subtype, outputSize);
             _audioMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSource);

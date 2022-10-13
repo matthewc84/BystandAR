@@ -29,7 +29,9 @@ using Photon.Realtime;
 
     [Tooltip("The prefab to use for representing the player")]
     [SerializeField]
-    private GameObject playerPrefab;
+    public GameObject playerPrefab;
+
+    public GameObject anchorParent;
 
     #endregion
 
@@ -48,11 +50,10 @@ using Photon.Realtime;
         }
         else
         {
-
-
-
-
-
+            //Debug.LogFormat("We are Instantiating LocalPlayer from {0}", Application.loadedLevelName);
+            // we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
+            //GameObject player = PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
+            //player.transform.SetParent(anchorParent.transform, false);
         }
 
     }
@@ -95,14 +96,14 @@ using Photon.Realtime;
     public override void OnPlayerEnteredRoom(Player other)
         {
             Debug.LogFormat("OnPlayerEnteredRoom() {0}", other.NickName); // not seen if you're the player connecting
-        
+
 
         if (PhotonNetwork.IsMasterClient)
-            {
-                Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
-                
-            }
+        {
+            Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient); // called before OnPlayerLeftRoom
         }
+
+    }
 
 
         public override void OnPlayerLeftRoom(Player other)

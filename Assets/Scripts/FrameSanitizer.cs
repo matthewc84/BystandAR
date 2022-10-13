@@ -84,8 +84,10 @@ namespace BystandAR
         public bool ShowDebugImagesAndDepth;
         public bool userSpeaking;
         public bool logData = true;
-        public GameObject clientSocketImages;
-        public GameObject clientSocketDepth;
+        public GameObject clientSocketImagesPrefab;
+        public GameObject clientSocketDepthPrefab;
+        public GameObject clientSocketImagesInstance;
+        public GameObject clientSocketDepthInstance;
 
 
         // Private fields
@@ -123,14 +125,19 @@ namespace BystandAR
 
         async void Start()
         {
+            //clientSocketImagesInstance = Instantiate(clientSocketImagesPrefab);
+            //clientSocketDepthInstance = Instantiate(clientSocketDepthPrefab);
+            //clientSocketImagesInstance.SetActive(false);
+            //clientSocketDepthInstance.SetActive(false);
+
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
            // StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
-            clientSocketImagesScript = clientSocketImages.GetComponent<SocketClientImages>();
-            clientSocketDepthScript = clientSocketDepth.GetComponent<SocketClientDepth>();
+            clientSocketImagesScript = clientSocketImagesInstance.GetComponent<SocketClientImages>();
+            clientSocketDepthScript = clientSocketDepthInstance.GetComponent<SocketClientDepth>();
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -222,13 +229,17 @@ namespace BystandAR
             if (returnFrame != null)
             {
                 var sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
+                    if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && ((clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf 
+                     && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer) || (GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null 
+                     && GameObject.Find("SocketClientImages(Clone)").GetComponent<SocketClientImages>().connectedToServer && GameObject.Find("SocketClientDepth(Clone)").GetComponent<SocketClientDepth>().connectedToServer)))
 
-
-                if(OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && ((clientSocketImages.activeSelf && clientSocketDepth.activeSelf 
-                    && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer) || (GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null && GameObject.Find("SocketClientImages(Clone)").GetComponent<SocketClientImages>().connectedToServer && GameObject.Find("SocketClientDepth(Clone)").GetComponent<SocketClientDepth>().connectedToServer)))
-                {
-                    frameCaptureCounter = 0;
-                        if(GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null)
+                    //if (OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && (clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf
+                        //&& clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer))
+                    {
+                        frameCaptureCounter = 0;
+                        //clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                        //clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
+                        if (GameObject.Find("SocketClientDepth(Clone)") != null && GameObject.Find("SocketClientImages(Clone)") != null)
                         {
                             GameObject.Find("SocketClientImages(Clone)").GetComponent<SocketClientImages>().inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
                             GameObject.Find("SocketClientDepth(Clone)").GetComponent<SocketClientDepth>().inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
@@ -239,7 +250,6 @@ namespace BystandAR
                             clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
 
                         }
-
                     }
 
 
@@ -411,21 +421,21 @@ namespace BystandAR
 
                     var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
                     var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
-                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, 1280f);
-                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, 720f);
-                    if((xCoordImage + boundingBoxScript.bboxWidth) >= 1280f)
+                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, (float)returnFrame.bitmap.PixelWidth);
+                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, (float)returnFrame.bitmap.PixelHeight);
+                    if((xCoordImage + boundingBoxScript.bboxWidth) >= (float)returnFrame.bitmap.PixelWidth)
                     {
-                        scaledImageWidth = (1280 - xCoordImage);
+                        scaledImageWidth = ((float)returnFrame.bitmap.PixelWidth - xCoordImage);
                     }
                     else
                     {
                         scaledImageWidth = boundingBoxScript.bboxWidth;
                     }
 
-                    if((yCoordImage + boundingBoxScript.bboxHeight) >= 720f)
+                    if((yCoordImage + boundingBoxScript.bboxHeight) >= (float)returnFrame.bitmap.PixelHeight)
                     {
 
-                        scaledImageHeight = (720 - yCoordImage);
+                        scaledImageHeight = ((float)returnFrame.bitmap.PixelHeight - yCoordImage);
                     }
                     else
                     {
@@ -479,21 +489,21 @@ namespace BystandAR
 
                     var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
                     var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
-                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, 1280f);
-                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, 720f);
-                    if ((xCoordImage + boundingBoxScript.bboxWidth) >= 1280f)
+                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, (float)returnFrame.bitmap.PixelWidth);
+                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, (float)returnFrame.bitmap.PixelHeight);
+                    if ((xCoordImage + boundingBoxScript.bboxWidth) >= (float)returnFrame.bitmap.PixelWidth)
                     {
-                        scaledImageWidth = (1280 - xCoordImage);
+                        scaledImageWidth = ((float)returnFrame.bitmap.PixelWidth - xCoordImage);
                     }
                     else
                     {
                         scaledImageWidth = boundingBoxScript.bboxWidth;
                     }
 
-                    if ((yCoordImage + boundingBoxScript.bboxHeight) >= 720f)
+                    if ((yCoordImage + boundingBoxScript.bboxHeight) >= (float)returnFrame.bitmap.PixelHeight)
                     {
 
-                        scaledImageHeight = (720 - yCoordImage);
+                        scaledImageHeight = ((float)returnFrame.bitmap.PixelHeight - yCoordImage);
                     }
                     else
                     {

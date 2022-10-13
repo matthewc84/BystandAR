@@ -65,7 +65,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Update()
     {
-
+        
     }
 
 
@@ -108,8 +108,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         Debug.Log("PUN Basics Tutorial/Launcher: OnConnectedToMaster() was called by PUN");
         if (isConnecting)
         {
-            // #Critical: The first we try to do is to join a potential existing room. If there is, good, else, we'll be called back with OnJoinRandomFailed()
-            //PhotonNetwork.JoinRandomRoom();
+            // #Critical: The first we try to do is to join a potential existing room. 
             PhotonNetwork.JoinOrCreateRoom("HardCodedRoom", null, null);
             isConnecting = false;
         }
@@ -135,14 +134,18 @@ public class Launcher : MonoBehaviourPunCallbacks
         Debug.Log("PUN Basics Tutorial/Launcher: OnJoinedRoom() called by PUN. Now this client is in a room.");
         // #Critical
         // Load the Room Level.
-        var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        player.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+
+            var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity);
+            //player.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+
+
+
 
     }
 
     public void spawnCube()
     {
-        GameObject newCube = PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, .5f), Quaternion.identity);
+        GameObject newCube = PhotonNetwork.Instantiate("Cube", Camera.main.transform.position + Camera.main.transform.forward * 2, Quaternion.identity);
         if (PhotonNetwork.IsMasterClient)
         {
             newCube.GetComponent<MeshRenderer>().material.color = Color.green;
