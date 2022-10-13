@@ -133,9 +133,10 @@ namespace BystandAR
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
-           // StartCoroutine(FramerateCountLoop());
+            // StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
-            tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+            //tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+            tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
             clientSocketImagesScript = clientSocketImagesInstance.GetComponent<SocketClientImages>();
             clientSocketDepthScript = clientSocketDepthInstance.GetComponent<SocketClientDepth>();
 
@@ -187,7 +188,8 @@ namespace BystandAR
             if (imagePreviewPlane != null)
             {
                 imageMediaMaterial = imagePreviewPlane.GetComponent<MeshRenderer>().material;
-                imageMediaTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+                //imageMediaTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
+                imageMediaTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
                 imageMediaMaterial.mainTexture = imageMediaTexture;
             }
         }
