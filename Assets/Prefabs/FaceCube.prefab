@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3316409738487591536}
   - component: {fileID: -7009120315968318315}
   - component: {fileID: -2716397250255789392}
-  - component: {fileID: 693508181973428882}
+  - component: {fileID: -6058901359513786638}
   m_Layer: 0
   m_Name: FaceCube
   m_TagString: BoundingBox
@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 1077441217099968542}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -178,7 +178,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   eyeCursorSnapToTargetCenter: 0
---- !u!65 &693508181973428882
+--- !u!65 &-6058901359513786638
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -189,5 +189,5 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.99999994, y: 0.99999994, z: 0.99999994}
+  m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}

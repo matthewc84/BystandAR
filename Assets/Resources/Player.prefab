@@ -55,7 +55,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4434913501940436350}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -177,8 +177,8 @@ MonoBehaviour:
   onLookAtStart:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactStarted
         m_Mode: 1
         m_Arguments:
@@ -192,8 +192,8 @@ MonoBehaviour:
   whileLookingAtTarget:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactMaintained
         m_Mode: 1
         m_Arguments:
@@ -207,8 +207,8 @@ MonoBehaviour:
   onLookAway:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactLost
         m_Mode: 1
         m_Arguments:

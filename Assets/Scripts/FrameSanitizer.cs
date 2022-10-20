@@ -125,10 +125,6 @@ namespace BystandAR
 
         async void Start()
         {
-            //clientSocketImagesInstance = Instantiate(clientSocketImagesPrefab);
-            //clientSocketDepthInstance = Instantiate(clientSocketDepthPrefab);
-            //clientSocketImagesInstance.SetActive(false);
-            //clientSocketDepthInstance.SetActive(false);
 
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
@@ -409,7 +405,7 @@ namespace BystandAR
                 Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                 Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
-                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
+                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F) + 20, 0);
                     var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
                     xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
                     yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
@@ -477,7 +473,7 @@ namespace BystandAR
                     Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                     Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
 
-                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F), 0);
+                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F) + 20, 0);
                     var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
                     xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
                     yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);

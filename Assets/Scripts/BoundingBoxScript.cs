@@ -58,7 +58,7 @@ namespace BystandAR
             staleCounter += 1;
 
             //If object has existed for more than the given threshold without update, we treat it as stale and remove
-            if (staleCounter > 60)
+            if (staleCounter > 90)
             {
                 RemoveDetection();
             }
@@ -73,6 +73,10 @@ namespace BystandAR
             if (percentEyeAndVoiceContact > 0.30f || percentEyeContact > 0.50f)
             {
                 toObscure = false;
+            }
+            else
+            {
+                toObscure = true;
             }
         }
 

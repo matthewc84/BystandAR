@@ -68,6 +68,10 @@ namespace BystandAR
             {
                 toObscure = false;
             }
+            else
+            {
+                toObscure = true;
+            }
         }
 
         public void EyeContactStarted()
