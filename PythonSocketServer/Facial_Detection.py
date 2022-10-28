@@ -39,7 +39,7 @@ parent_dir = os.getcwd() + "\\BystandAR Testing\\All Tests\\"
 for foldername in os.listdir(parent_dir):
     numFrames = 0
     tempOutputDirectory = os.path.join(parent_dir, foldername)
-    outputdirectory = os.path.join(tempOutputDirectory, 'FramesWithBystanders')
+    outputdirectory = os.path.join(tempOutputDirectory, 'FramesWithFaces')
     folderpath = os.path.join(parent_dir, foldername)
     try:
         os.mkdir(outputdirectory)
@@ -58,10 +58,7 @@ for foldername in os.listdir(parent_dir):
                 score = face["confidence"]
                 if score > 0.90:
                     x, y, w, h = face["box"]
-                    detected_face = img[int(y):int(y+h), int(x):int(x+w)]
-                    analysis = DeepFace.analyze(detected_face, enforce_detection=False)
-                    if(analysis["emotion"][analysis["dominant_emotion"]] > 90 or analysis["race"][analysis["dominant_race"]] > 90):
-                        vettedDetections.append(face["box"])
+                    vettedDetections.append(face["box"])
 
         if len(vettedDetections) > 0:
             drawBoundingBoxes(img, outputdirectory, str(numFrames) + '.png', vettedDetections, color)
