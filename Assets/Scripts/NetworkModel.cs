@@ -106,6 +106,11 @@ namespace BystandAR
             try
             {
 			    var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+                return new DetectedFaces
+			    {
+			    Faces = detectedFaces.Select(f => 
+			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
+			    };
             }
             catch (Exception ex){
                 return null;
@@ -114,11 +119,7 @@ namespace BystandAR
 
             //UnityEngine.Debug.Log($"Elapsed time for inference (in ms): {stopwatch.ElapsedMilliseconds.ToString("F4")}");
 
-            return new DetectedFaces
-			{
-			    Faces = detectedFaces.Select(f => 
-			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
-			};
+
 
     }
 

@@ -471,6 +471,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4582681926037811585, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4679913627179648987, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -545,7 +549,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4679913627488335819, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4679913627549314114, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_Layer
@@ -665,7 +669,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5772300440343019168, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 73.95
       objectReference: {fileID: 0}
     - target: {fileID: 5855227464161918274, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_Layer
@@ -721,27 +725,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 769.81586
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 63.95
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 389.90793
       objectReference: {fileID: 0}
     - target: {fileID: 6840801738257809851, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -36.975
       objectReference: {fileID: 0}
     - target: {fileID: 6864035181348889918, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_Layer
@@ -797,11 +801,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8034472941960435992, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8034472941960435992, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8249236588173118477, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
       propertyPath: m_Layer
@@ -3513,7 +3517,7 @@ MonoBehaviour:
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
   imagePreviewPlane: {fileID: 894834160}
   longDepthPreviewPlane: {fileID: 1926444571}
-  samplingInterval: 8
+  samplingInterval: 7
   frameCaptureInterval: 10
   OffLoadSanitizedFramesToServer: 1
   ShowDebugImagesAndDepth: 0
