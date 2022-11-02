@@ -89,6 +89,11 @@ namespace BystandAR
 
         public void EyeContactMaintained()
         {
+            if (isSubject)
+            {
+                toObscure = false;
+            }
+
             if (!eyeGazeStopwatch.IsRunning)
             {
                 eyeGazeStopwatch.Restart();

@@ -173,7 +173,7 @@ MonoBehaviour:
     description: None
     axisConstraint: 0
   voiceSelect: []
-  dwellTimeInSec: 3
+  dwellTimeInSec: 2
   onLookAtStart:
     m_PersistentCalls:
       m_Calls:
