@@ -132,15 +132,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log("PUN Basics Tutorial/Launcher: OnJoinedRoom() called by PUN. Now this client is in a room.");
-        // #Critical
-        // Load the Room Level.
-
-            var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity);
-            //player.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
-
-
-
-
+        var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity);
     }
 
     public void spawnCube()
@@ -149,12 +141,11 @@ public class Launcher : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             newCube.GetComponent<MeshRenderer>().material.color = Color.green;
-            //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+
         }
         else
         {
             newCube.GetComponent<MeshRenderer>().material.color = Color.red;
-            //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
         }
     }
 

@@ -48,11 +48,11 @@ namespace BystandAR
                 photonView.RPC("SendIdentifier", RpcTarget.OthersBuffered, identifier);
 
                 Debug.Log("Anchor Created");
+                GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
+                GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
 
-                //GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
-                //GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
-                Instantiate(clientPrefabImages);
-                Instantiate(clientPrefabDepth);
+                //Instantiate(clientPrefabImages);
+                //Instantiate(clientPrefabDepth);
             }
 
 

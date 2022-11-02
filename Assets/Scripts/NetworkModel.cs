@@ -28,7 +28,7 @@ using Windows.Media.FaceAnalysis;
 
 
 
-namespace BystandAR 
+namespace BystandAR
 {
 
     public class CustomModelOutput
@@ -103,7 +103,13 @@ namespace BystandAR
             }
 
             //var stopwatch = Stopwatch.StartNew();
-			var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+            try
+            {
+			    var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+            }
+            catch (Exception ex){
+                return null;
+            }
             //stopwatch.Stop();
 
             //UnityEngine.Debug.Log($"Elapsed time for inference (in ms): {stopwatch.ElapsedMilliseconds.ToString("F4")}");
@@ -121,4 +127,3 @@ namespace BystandAR
 
     }
 }
-
