@@ -43,7 +43,7 @@ namespace BystandAR
 
     }
 
-        public class MediaCaptureUtility
+    public class MediaCaptureUtility
     {
         public bool IsCapturing { get; set; }
 
@@ -261,7 +261,6 @@ namespace BystandAR
 
             /*for (int i = 0; i < length; i++)
             {
-
                 if (capacityInBytes > 0)
                 {
                     buffer[i] = dataInFloat[indexInFrame];
@@ -286,4 +285,3 @@ namespace BystandAR
 
     }
 }
-

@@ -8,6 +8,10 @@ from PIL import Image as Image
 import io
 import struct
 import base64
+import cv2
+import numpy as np
+import math
+
 
 # import thread module
 from _thread import *
@@ -16,6 +20,27 @@ import threading
 
 print_lock = threading.RLock()
 
+def Convert(filename, width, height):
+        f_y = open(filename, "rb")
+        f_uv= open(filename, "rb")
+        converted_image = Image.new("RGB", (width, height) )
+        pixels = converted_image.load()
+ 		#lets get our y cursor ready
+        for j in range(0, height):
+            for i in range(0, width):
+
+                uv_index = (width * math.floor(j/2)) + (math.floor(i/2))*2
+                f_uv.seek(uv_index)
+                y = ord(f_y.read(1))
+                u = ord(f_uv.read(1))
+                v = ord(f_uv.read(1))
+
+                b = 1.164 * (y-16) + 2.018 * (u - 128)
+                g = 1.164 * (y-16) - 0.813 * (v - 128) - 0.391 * (u - 128)
+                r = 1.164 * (y-16) + 1.596*(v - 128)
+
+                pixels[i,j] = int(r), int(g), int(b)
+        converted_image.save(filename)
 
 # thread function
 def threaded(c):
@@ -38,7 +63,7 @@ def threaded(c):
         chunks = []
         bytes_recd = 0
         while bytes_recd < length:
-            chunk = c.recv(min(length - bytes_recd, 2048))
+            chunk = c.recv(min(length - bytes_recd, 8192))
             if chunk == b'':
                 raise RuntimeError("socket connection broken")
             chunks.append(chunk)
@@ -47,11 +72,13 @@ def threaded(c):
 
 
         try:
-            #img = Image.frombytes('RGBA', (1280,720), pictureInput)
+            #img = Image.frombytes('L', (1920,1080), pictureInput)
             img = Image.open(io.BytesIO(pictureInput))
             img = img.rotate(180)
+            #img = img.convert('RGB')
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             img.save(filePathJPG)
+
         except:
             print("Frame Dropped")
             pass

@@ -13,9 +13,9 @@ namespace BystandAR
         public float bboxWidth = 50;
         public float bboxHeight = 50;
         public bool toObscure = true;
+        public bool isSubject = false;
         private FrameSanitizer frameSanitizer;
         
-        bool firstTimeEyeGazeContact = true;
         Stopwatch eyeGazeStopwatch;
         public Stopwatch detectionStopwatch;
         long voiceAndEyeGazeCounter;
@@ -66,19 +66,17 @@ namespace BystandAR
 
             if (percentEyeAndVoiceContact > 0.30f || percentEyeContact > 0.50f)
             {
-                toObscure = false;
-            }
-            else
-            {
-                toObscure = true;
+                isSubject = true;
             }
         }
 
         public void EyeContactStarted()
         {
             eyeGazeStopwatch.Restart();
-            //UnityEngine.Debug.Log("Eye Gaze Started");
-
+            if (isSubject)
+            {
+                toObscure = false;
+            }
         }
 
         public void EyeContactMaintained()
@@ -112,7 +110,12 @@ namespace BystandAR
             totalEyeGazeTime += eyeGazeCounter;
             eyeGazeCounter = 0;
             voiceAndEyeGazeCounter = 0;
-            //UnityEngine.Debug.Log("Eye Gaze Stops");
+            toObscure = true;
+        }
+
+        public void onDwell()
+        {
+            isSubject = true;
         }
 
 

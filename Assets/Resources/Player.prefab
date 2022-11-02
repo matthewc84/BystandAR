@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 655649024722352298}
   - component: {fileID: 6552700849023850740}
   - component: {fileID: 8727676206322149266}
-  - component: {fileID: -1792412169254322268}
+  - component: {fileID: -5709871334345842124}
   m_Layer: 0
   m_Name: Player
   m_TagString: BoundingBoxHL2User
@@ -173,7 +173,7 @@ MonoBehaviour:
     description: None
     axisConstraint: 0
   voiceSelect: []
-  dwellTimeInSec: 0.8
+  dwellTimeInSec: 3
   onLookAtStart:
     m_PersistentCalls:
       m_Calls:
@@ -221,7 +221,19 @@ MonoBehaviour:
         m_CallState: 2
   onDwell:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
+        m_MethodName: onDwell
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onSelected:
     m_PersistentCalls:
       m_Calls: []
@@ -247,8 +259,9 @@ MonoBehaviour:
   bboxWidth: 75
   bboxHeight: 75
   toObscure: 1
---- !u!136 &-1792412169254322268
-CapsuleCollider:
+  isSubject: 0
+--- !u!65 &-5709871334345842124
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -257,7 +270,6 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
