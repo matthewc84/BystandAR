@@ -18,6 +18,7 @@ namespace BystandAR
         public int staleCounter;
         
         Stopwatch eyeGazeStopwatch;
+        Stopwatch staleSubjectStopwatch;
         public Stopwatch detectionStopwatch;
         long voiceAndEyeGazeCounter;
         long totalEyeGazeTime;
@@ -32,6 +33,7 @@ namespace BystandAR
 
             eyeGazeStopwatch = new Stopwatch();
             detectionStopwatch = new Stopwatch();
+            staleSubjectStopwatch = new Stopwatch();
             staleCounter = 0;
             voiceAndEyeGazeCounter = 0;
             totalEyeGazeTime = 0;
@@ -40,7 +42,6 @@ namespace BystandAR
             percentEyeAndVoiceContact = 0;
             percentEyeContact = 0;
             detectionStopwatch.Start();
-            //eyeGazeStopwatch.Start();
             frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
             
 
@@ -75,11 +76,18 @@ namespace BystandAR
                 isSubject = true;
             }
 
+            if(staleSubjectStopwatch.ElapsedMilliseconds > 10000)
+            {
+                isSubject = false;
+            }
+
         }
 
         public void EyeContactStarted()
         {
             eyeGazeStopwatch.Restart();
+            staleSubjectStopwatch.Reset();
+
             if (isSubject)
             {
                 toObscure = false;
@@ -119,6 +127,7 @@ namespace BystandAR
         {
             toObscure = true;
             eyeGazeStopwatch.Stop();
+            staleSubjectStopwatch.Restart();
             voiceAndEyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
             eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
             totalVoiceAndEyeGazeTime += voiceAndEyeGazeCounter;

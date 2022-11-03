@@ -20,28 +20,6 @@ import threading
 
 print_lock = threading.RLock()
 
-def Convert(filename, width, height):
-        f_y = open(filename, "rb")
-        f_uv= open(filename, "rb")
-        converted_image = Image.new("RGB", (width, height) )
-        pixels = converted_image.load()
- 		#lets get our y cursor ready
-        for j in range(0, height):
-            for i in range(0, width):
-
-                uv_index = (width * math.floor(j/2)) + (math.floor(i/2))*2
-                f_uv.seek(uv_index)
-                y = ord(f_y.read(1))
-                u = ord(f_uv.read(1))
-                v = ord(f_uv.read(1))
-
-                b = 1.164 * (y-16) + 2.018 * (u - 128)
-                g = 1.164 * (y-16) - 0.813 * (v - 128) - 0.391 * (u - 128)
-                r = 1.164 * (y-16) + 1.596*(v - 128)
-
-                pixels[i,j] = int(r), int(g), int(b)
-        converted_image.save(filename)
-
 # thread function
 def threaded(c):
     frameCounter = 0

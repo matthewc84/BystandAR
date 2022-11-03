@@ -103,7 +103,7 @@ namespace BystandAR
             }
 
             // Convert the pixel formats
-            //var subtype = MediaEncodingSubtypes.Bgra8;
+            //var subtype = MediaEncodingSubtypes.Nv12;
             var subtype = MediaEncodingSubtypes.Rgb32;
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
