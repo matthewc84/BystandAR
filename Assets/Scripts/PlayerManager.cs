@@ -39,10 +39,19 @@ namespace BystandAR
 
         }
 
-        async void Start()
-        {
 
-            if (PhotonNetwork.IsMasterClient && photonView.IsMine)
+        #endregion
+
+        // Update is called once per frame
+        async void Update()
+        {
+            if (photonView.IsMine)
+            {
+                this.gameObject.transform.position = Camera.main.transform.position;
+
+            }
+
+            if (PhotonNetwork.IsMasterClient && photonView.IsMine && PhotonNetwork.InRoom && identifier == null)
             {
                 identifier = await GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>().createAnchor();
                 photonView.RPC("SendIdentifier", RpcTarget.OthersBuffered, identifier);
@@ -50,23 +59,6 @@ namespace BystandAR
                 Debug.Log("Anchor Created");
                 GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
                 GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
-
-                //Instantiate(clientPrefabImages);
-                //Instantiate(clientPrefabDepth);
-            }
-
-
-        }
-
-        #endregion
-
-        // Update is called once per frame
-        void Update()
-        {
-            if (photonView.IsMine)
-            {
-                this.gameObject.transform.position = Camera.main.transform.position;
-
             }
 
         }

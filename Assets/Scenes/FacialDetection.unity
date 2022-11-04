@@ -3515,7 +3515,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
-  samplingInterval: 7
+  samplingInterval: 8
   frameCaptureInterval: 10
   OffLoadSanitizedFramesToServer: 1
   SanitizeFrames: 1

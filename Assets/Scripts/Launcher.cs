@@ -145,7 +145,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         }
         else
         {
-            newCube.GetComponent<MeshRenderer>().material.color = Color.red;
+            newCube.GetComponent<MeshRenderer>().material.color = Color.green;
         }
     }
 

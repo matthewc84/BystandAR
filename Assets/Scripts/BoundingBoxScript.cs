@@ -71,7 +71,7 @@ namespace BystandAR
                 //UnityEngine.Debug.Log(percentEyeContact.ToString("F6"));
             }
 
-            if (percentEyeAndVoiceContact > 0.30f || percentEyeContact > 0.50f)
+            if (percentEyeAndVoiceContact > 0.15f || percentEyeContact > 0.25f)
             {
                 isSubject = true;
             }

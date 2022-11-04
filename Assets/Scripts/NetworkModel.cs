@@ -87,7 +87,7 @@ namespace BystandAR
 			if (detector == null)
             {
                 detector = await FaceDetector.CreateAsync();
-                detector.MinDetectableFaceSize = new BitmapSize(){Height = 20, Width = 20};
+                //detector.MinDetectableFaceSize = new BitmapSize(){Height = 20, Width = 20};
             }
 
             var allFormats = FaceDetector.GetSupportedBitmapPixelFormats();
