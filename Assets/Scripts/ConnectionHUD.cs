@@ -8,64 +8,65 @@ using Microsoft.MixedReality.Toolkit;
 using UnityEditor;
 using UnityEditor.Events;
 #endif
-
-/// <summary>
-///     Handles the start of the inference model
-/// </summary>
-/// 
-public class ConnectionHUD : MonoBehaviour
+namespace BystandAR
 {
-
-    public GameObject buttonParent;
-    public GameObject _interviewQuestions;
-    public GameObject _socketClientImages;
-    public GameObject _socketClientDepth;
-    public GameObject _spawnCube;
-    public GameObject _launcher;
-    public GameObject _gameManager;
-
-
-
-    void Start()
+    /// <summary>
+    ///     Handles the start of the inference model
+    /// </summary>
+    /// 
+    public class ConnectionHUD : MonoBehaviour
     {
-        
+
+        public GameObject buttonParent;
+        public GameObject _interviewQuestions;
+        public GameObject _socketClientImages;
+        public GameObject _socketClientDepth;
+        public GameObject _spawnCube;
+        public GameObject _launcher;
+        public GameObject _gameManager;
+        public GameObject _anchorManager;
+
+
+
+        void Start()
+        {
+
+        }
+
+        public void startInterviewNoLoggingPressed()
+        {
+            _interviewQuestions.SetActive(true);
+            buttonParent.SetActive(false);
+        }
+
+        public void startBlocksNoLoggingPressed()
+        {
+
+            _launcher.SetActive(true);
+            _gameManager.SetActive(true);
+            _spawnCube.SetActive(true);
+            buttonParent.SetActive(false);
+
+        }
+
+        public void startInterviewLoggingPressed()
+        {
+            _interviewQuestions.SetActive(true);
+            GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
+            GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
+            buttonParent.SetActive(false);
+        }
+
+        public void startBlocksLoggingPressed()
+        {
+
+
+            _launcher.SetActive(true);
+            _gameManager.SetActive(true);
+            _spawnCube.SetActive(true);
+            buttonParent.SetActive(false);
+
+        }
+
     }
-
-    public void startInterviewNoLoggingPressed()
-    {
-        _interviewQuestions.SetActive(true);
-        buttonParent.SetActive(false);
-    }
-
-    public void startBlocksNoLoggingPressed()
-    {
-        _spawnCube.SetActive(true);
-        _launcher.SetActive(true);
-        _gameManager.SetActive(true);
-        buttonParent.SetActive(false);
-    }
-
-    public void startInterviewLoggingPressed()
-    {
-        _interviewQuestions.SetActive(true);
-        _socketClientImages.SetActive(true);
-        _socketClientDepth.SetActive(true);
-        buttonParent.SetActive(false);
-    }
-
-    public void startBlocksLoggingPressed()
-    {
-        _socketClientImages.SetActive(true);
-        _socketClientDepth.SetActive(true);
-        _spawnCube.SetActive(true);
-        _launcher.SetActive(true);
-        _gameManager.SetActive(true);
-        buttonParent.SetActive(false);
-    }
-
-
-
-
-
-
 }

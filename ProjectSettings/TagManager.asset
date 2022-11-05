@@ -6,6 +6,7 @@ TagManager:
   tags:
   - BoundingBox
   - Bullet
+  - BoundingBoxHL2User
   layers:
   - Default
   - TransparentFX

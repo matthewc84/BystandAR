@@ -8,6 +8,10 @@ from PIL import Image as Image
 import io
 import struct
 import base64
+import cv2
+import numpy as np
+import math
+
 
 # import thread module
 from _thread import *
@@ -15,7 +19,6 @@ import threading
  
 
 print_lock = threading.RLock()
-
 
 # thread function
 def threaded(c):
@@ -38,7 +41,7 @@ def threaded(c):
         chunks = []
         bytes_recd = 0
         while bytes_recd < length:
-            chunk = c.recv(min(length - bytes_recd, 2048))
+            chunk = c.recv(min(length - bytes_recd, 8192))
             if chunk == b'':
                 raise RuntimeError("socket connection broken")
             chunks.append(chunk)
@@ -47,11 +50,13 @@ def threaded(c):
 
 
         try:
-            #img = Image.frombytes('RGBA', (1280,720), pictureInput)
+            #img = Image.frombytes('L', (1920,1080), pictureInput)
             img = Image.open(io.BytesIO(pictureInput))
             img = img.rotate(180)
+            #img = img.convert('RGB')
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             img.save(filePathJPG)
+
         except:
             print("Frame Dropped")
             pass

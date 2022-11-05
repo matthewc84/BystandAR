@@ -65,7 +65,7 @@ public class Launcher : MonoBehaviourPunCallbacks
 
     void Update()
     {
-
+        
     }
 
 
@@ -87,7 +87,7 @@ public class Launcher : MonoBehaviourPunCallbacks
             {
             // #Critical we need at this point to attempt joining a Random Room. If it fails, we'll get notified in OnJoinRandomFailed() and we'll create one.
             //PhotonNetwork.JoinRandomRoom();
-            //isConnecting = PhotonNetwork.ConnectUsingSettings();
+            isConnecting = PhotonNetwork.ConnectUsingSettings();
         }
             else
             {
@@ -108,8 +108,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         Debug.Log("PUN Basics Tutorial/Launcher: OnConnectedToMaster() was called by PUN");
         if (isConnecting)
         {
-            // #Critical: The first we try to do is to join a potential existing room. If there is, good, else, we'll be called back with OnJoinRandomFailed()
-            //PhotonNetwork.JoinRandomRoom();
+            // #Critical: The first we try to do is to join a potential existing room. 
             PhotonNetwork.JoinOrCreateRoom("HardCodedRoom", null, null);
             isConnecting = false;
         }
@@ -133,17 +132,21 @@ public class Launcher : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log("PUN Basics Tutorial/Launcher: OnJoinedRoom() called by PUN. Now this client is in a room.");
-        // #Critical
-        // Load the Room Level.
-        var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        player.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
-
+        var player = PhotonNetwork.Instantiate("Player", new Vector3(0f, 0f, 0f), Quaternion.identity);
     }
 
     public void spawnCube()
     {
-        GameObject newCube = PhotonNetwork.Instantiate("Cube", new Vector3(0f, 0f, .5f), Quaternion.identity);
-        //newCube.transform.SetParent(GameObject.Find("AnchorParent").transform, true);
+        GameObject newCube = PhotonNetwork.Instantiate("Cube", Camera.main.transform.position + Camera.main.transform.forward * 2, Quaternion.identity);
+        if (PhotonNetwork.IsMasterClient)
+        {
+            newCube.GetComponent<MeshRenderer>().material.color = Color.green;
+
+        }
+        else
+        {
+            newCube.GetComponent<MeshRenderer>().material.color = Color.green;
+        }
     }
 
     #endregion

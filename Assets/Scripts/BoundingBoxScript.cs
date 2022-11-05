@@ -13,11 +13,12 @@ namespace BystandAR
         public float bboxWidth = 0;
         public float bboxHeight = 0;
         public bool toObscure = true;
+        public bool isSubject = false;
         private FrameSanitizer frameSanitizer;
         public int staleCounter;
         
-        bool firstTimeEyeGazeContact = true;
         Stopwatch eyeGazeStopwatch;
+        Stopwatch staleSubjectStopwatch;
         public Stopwatch detectionStopwatch;
         long voiceAndEyeGazeCounter;
         long totalEyeGazeTime;
@@ -32,6 +33,7 @@ namespace BystandAR
 
             eyeGazeStopwatch = new Stopwatch();
             detectionStopwatch = new Stopwatch();
+            staleSubjectStopwatch = new Stopwatch();
             staleCounter = 0;
             voiceAndEyeGazeCounter = 0;
             totalEyeGazeTime = 0;
@@ -40,7 +42,6 @@ namespace BystandAR
             percentEyeAndVoiceContact = 0;
             percentEyeContact = 0;
             detectionStopwatch.Start();
-            eyeGazeStopwatch.Start();
             frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
             
 
@@ -58,7 +59,7 @@ namespace BystandAR
             staleCounter += 1;
 
             //If object has existed for more than the given threshold without update, we treat it as stale and remove
-            if (staleCounter > 60)
+            if (staleCounter > 90)
             {
                 RemoveDetection();
             }
@@ -70,25 +71,44 @@ namespace BystandAR
                 //UnityEngine.Debug.Log(percentEyeContact.ToString("F6"));
             }
 
-            if (percentEyeAndVoiceContact > 0.30f || percentEyeContact > 0.50f)
+            if (percentEyeAndVoiceContact > 0.15f || percentEyeContact > 0.25f)
             {
-                toObscure = false;
+                isSubject = true;
             }
+
+            if(staleSubjectStopwatch.ElapsedMilliseconds > 10000)
+            {
+                isSubject = false;
+            }
+
         }
 
         public void EyeContactStarted()
         {
             eyeGazeStopwatch.Restart();
-            //UnityEngine.Debug.Log("Eye Gaze Started");
+            staleSubjectStopwatch.Reset();
+
+            if (isSubject)
+            {
+                toObscure = false;
+            }
 
         }
 
         public void EyeContactMaintained()
         {
+            if (isSubject)
+            {
+                toObscure = false;
+            }
+
+            if (!eyeGazeStopwatch.IsRunning)
+            {
+                eyeGazeStopwatch.Restart();
+            }
 
             if (frameSanitizer.userSpeaking)
             {
-                //voiceAndEyeGazeCounter += 1;
                 voiceAndEyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
                 eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
                 //UnityEngine.Debug.Log("Eye Gaze Continues");
@@ -96,9 +116,7 @@ namespace BystandAR
             }
             else
             {
-                //eyegazeCounter += 1;
                 eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
-                //UnityEngine.Debug.Log(eyeGazeCounter);
 
             }
 
@@ -107,24 +125,31 @@ namespace BystandAR
 
         public void EyeContactLost()
         {
+            toObscure = true;
             eyeGazeStopwatch.Stop();
+            staleSubjectStopwatch.Restart();
             voiceAndEyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
             eyeGazeCounter = eyeGazeStopwatch.ElapsedMilliseconds;
             totalVoiceAndEyeGazeTime += voiceAndEyeGazeCounter;
             totalEyeGazeTime += eyeGazeCounter;
             eyeGazeCounter = 0;
             voiceAndEyeGazeCounter = 0;
-            //UnityEngine.Debug.Log("Eye Gaze Stops");
+
+        }
+
+        public void onDwell()
+        {
+            isSubject = true;
         }
 
 
         //If this gameobject is in the same physical space another bounding box, we compare the time they have existed and remove the older one
         //This allows for tracking the amount of eye contact over multiple detections.
-        void OnCollisionEnter(Collision collision)
+        /*void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.tag == "BoundingBox")
             {
-                UnityEngine.Debug.Log("Collision");
+                //UnityEngine.Debug.Log("Collision");
                 if (collision.gameObject.GetComponent<BoundingBoxScript>().detectionStopwatch.ElapsedMilliseconds < this.detectionStopwatch.ElapsedMilliseconds)
                 {
                     staleCounter = 0;
@@ -140,7 +165,7 @@ namespace BystandAR
             }
 
 
-        }
+        }*/
 
     }
 }

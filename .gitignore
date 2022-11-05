@@ -20,6 +20,10 @@
 # FrameCaptures
 /PythonSocketServer/FrameCaptures/
 /PythonSocketServer/DepthCaptures/
+/PythonSocketServer/Temp/
+/PythonSocketServer/BystandAR Testing/
+
+
 
 
 # Uncomment this line if you wish to ignore the asset store tools plugin

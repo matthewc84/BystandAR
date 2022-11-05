@@ -53,6 +53,7 @@ public class SocketClientDepth : MonoBehaviour
 #if !UNITY_EDITOR
         socket = new Windows.Networking.Sockets.StreamSocket();
         serverHost = new HostName("128.173.239.212");
+        //serverHost = new HostName("192.168.0.40");
         String port = "65433";
 
         try
