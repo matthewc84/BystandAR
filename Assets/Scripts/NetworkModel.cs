@@ -28,7 +28,7 @@ using Windows.Media.FaceAnalysis;
 
 
 
-namespace BystandAR 
+namespace BystandAR
 {
 
     public class CustomModelOutput
@@ -55,11 +55,11 @@ namespace BystandAR
     public class NetworkModel : MonoBehaviour
     {
 
-    #if ENABLE_WINMD_SUPPORT
+#if ENABLE_WINMD_SUPPORT
     FaceDetector detector;
-    #endif
+#endif
 
-    #if ENABLE_WINMD_SUPPORT
+#if ENABLE_WINMD_SUPPORT
 
 
     public async Task<DetectedFaces> EvaluateVideoFrameAsync(SoftwareBitmap bitmap)
@@ -87,6 +87,7 @@ namespace BystandAR
 			if (detector == null)
             {
                 detector = await FaceDetector.CreateAsync();
+                //detector.MinDetectableFaceSize = new BitmapSize(){Height = 20, Width = 20};
             }
 
             var allFormats = FaceDetector.GetSupportedBitmapPixelFormats();
@@ -102,22 +103,28 @@ namespace BystandAR
             }
 
             //var stopwatch = Stopwatch.StartNew();
-			var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+            try
+            {
+			    var detectedFaces = await detector.DetectFacesAsync(convertedBitmap);
+                return new DetectedFaces
+			    {
+			    Faces = detectedFaces.Select(f => 
+			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
+			    };
+            }
+            catch (Exception ex){
+                return null;
+            }
             //stopwatch.Stop();
 
             //UnityEngine.Debug.Log($"Elapsed time for inference (in ms): {stopwatch.ElapsedMilliseconds.ToString("F4")}");
 
-            return new DetectedFaces
-			{
-			    Faces = detectedFaces.Select(f => 
-			        new Rect {X = f.FaceBox.X, Y = f.FaceBox.Y, Width = f.FaceBox.Width, Height = f.FaceBox.Height}).ToArray()
-			};
+
 
     }
 
 
-    #endif
+#endif
 
     }
 }
-

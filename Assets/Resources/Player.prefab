@@ -11,14 +11,16 @@ GameObject:
   - component: {fileID: 2475014453920427667}
   - component: {fileID: 4132456077936169216}
   - component: {fileID: 1575458488224798203}
-  - component: {fileID: 3413533480946141287}
   - component: {fileID: -3666850768710393799}
   - component: {fileID: 8575689334452605181}
   - component: {fileID: 7151220291201401805}
   - component: {fileID: 655649024722352298}
+  - component: {fileID: 6552700849023850740}
+  - component: {fileID: 8727676206322149266}
+  - component: {fileID: -5709871334345842124}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: BoundingBoxHL2User
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32,7 +34,7 @@ Transform:
   m_GameObject: {fileID: 4434913501940436350}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -88,20 +90,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3413533480946141287
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4434913501940436350}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &-3666850768710393799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,6 +102,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9e53f6039eb1a94f84621fb79f9ead6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clientPrefabImages: {fileID: 8898405959194157326, guid: 3aea65d0a1a941d44a5cab1e1ebebc24, type: 3}
+  clientPrefabDepth: {fileID: 477101992790096595, guid: 7cbee0d27af49a04d995122c02c31457, type: 3}
 --- !u!114 &8575689334452605181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,3 +156,120 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a9033473fc931d4d831ac96863bd64d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6552700849023850740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4434913501940436350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6657bab90ac149872e5361b42ea62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  selectAction:
+    id: 0
+    description: None
+    axisConstraint: 0
+  voiceSelect: []
+  dwellTimeInSec: 2
+  onLookAtStart:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
+        m_MethodName: EyeContactStarted
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  whileLookingAtTarget:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
+        m_MethodName: EyeContactMaintained
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onLookAway:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
+        m_MethodName: EyeContactLost
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onDwell:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8727676206322149266}
+        m_TargetAssemblyTypeName: BystandAR.PlayerBoundingBoxScript, Assembly-CSharp
+        m_MethodName: onDwell
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onTapDown:
+    m_PersistentCalls:
+      m_Calls: []
+  onTapUp:
+    m_PersistentCalls:
+      m_Calls: []
+  eyeCursorSnapToTargetCenter: 0
+--- !u!114 &8727676206322149266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4434913501940436350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ccce389f5172a846b451188a4ea604f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bboxWidth: 150
+  bboxHeight: 150
+  toObscure: 1
+  isSubject: 0
+--- !u!65 &-5709871334345842124
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4434913501940436350}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}

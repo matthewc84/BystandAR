@@ -43,7 +43,7 @@ namespace BystandAR
 
     }
 
-        public class MediaCaptureUtility
+    public class MediaCaptureUtility
     {
         public bool IsCapturing { get; set; }
 
@@ -103,11 +103,12 @@ namespace BystandAR
             }
 
             // Convert the pixel formats
-            //var subtype = MediaEncodingSubtypes.Bgra8;
+            //var subtype = MediaEncodingSubtypes.Nv12;
             var subtype = MediaEncodingSubtypes.Rgb32;
 
             // The overloads of CreateFrameReaderAsync with the format arguments will actually make a copy in FrameArrived
-            BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
+            //BitmapSize outputSize = new BitmapSize { Width = 1280, Height = 720};
+            BitmapSize outputSize = new BitmapSize { Width = 1920, Height = 1080};
 
             _imageMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(imageFrameSourcePair.Value, subtype, outputSize);
             _audioMediaFrameReader = await _mediaCapture.CreateFrameReaderAsync(frameSource);
@@ -260,7 +261,6 @@ namespace BystandAR
 
             /*for (int i = 0; i < length; i++)
             {
-
                 if (capacityInBytes > 0)
                 {
                     buffer[i] = dataInFloat[indexInFrame];
@@ -285,4 +285,3 @@ namespace BystandAR
 
     }
 }
-

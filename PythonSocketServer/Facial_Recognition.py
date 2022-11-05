@@ -1,39 +1,73 @@
 from deepface import DeepFace
+from deepface.detectors import FaceDetector
+from retinaface import RetinaFace
 import sys
 import os
 import time
+import cv2
+import matplotlib.pyplot as plt
+from mtcnn import MTCNN
 
-def loading():                                  #make a function called loading
-    spaces = 0                                      #making a variable to store the amount of spaces between the start and the "."
-    while True:                                     #infinite loop
-        print("\b "*spaces+".", end="", flush=True) #we are deleting however many spaces and making them " " then printing "."
-        spaces = spaces+1                           #adding a space after each print
-        time.sleep(0.2)                             #waiting 0.2 secconds before proceeding
-        if (spaces>5):                              #if there are more than 5 spaces after adding one so meaning 5 spaces (if that makes sense)
-            print("\b \b"*spaces, end="")           #delete the line
-            spaces = 0                              #set the spaces back to 0
+def drawBoundingBoxes(imageData, outputdirectory, imageOutputName, inferenceResults, color):
+    """Draw bounding boxes on an image.
+    imageData: image data in numpy array format
+    imageOutputPath: output image file path
+    inferenceResults: inference results array off object (l,t,w,h)
+    colorMap: Bounding box color candidates, list of RGB tuples.
+    """
+    imageOutputPath = os.path.join(outputdirectory, imageOutputName)
+    for res in inferenceResults:
+        x, y, w, h = res
+        left = int(x)
+        top = int(y)
+        right = int(x) + int(w)
+        bottom = int(y) + int(h)
+        imgHeight, imgWidth, _ = imageData.shape
+        thick = int((imgHeight + imgWidth) // 900)
+        cv2.rectangle(imageData,(left, top), (right, bottom), color, thick)
+        #cv2.putText(imageData, label, (left, top - 12), 0, 1e-3 * imgHeight, color, thick//3)
+
+    cv2.imwrite(imageOutputPath, imageData)
 
 numFaces = 0
 numFrames = 0
-minconfidence = 50
 
 backends = ['opencv', 'ssd', 'dlib', 'mtcnn', 'retinaface', 'mediapipe']
-parent_dir = os.getcwd() + "\\FrameCaptures\\10032022223658"
+models = ["VGG-Face", "Facenet", "OpenFace", "DeepFace", "Dlib", "ArcFace"]
+parent_dir = os.getcwd() + "\\BystandAR Testing\\All Tests\\"
 
-for filename in os.listdir(parent_dir):
-    f = os.path.join(parent_dir, filename)
-    # checking if it is a file
-    if os.path.isfile(f):
-        numFrames = numFrames + 1
-        try:
-            face = DeepFace.detectFace(img_path = f, target_size = (224, 224), detector_backend = backends[4])
-            for i, instance in face.iterrows():
-                confidence = round(100*instance["confidence"], 2)
-                if(confidence > minConfidence):
-                    numFaces = numFaces + 1
-                    print("Current number of found faces: " + str(numfaces))
-        except:
-            #print("No Face in file: " + str(f))
-            pass
+for foldername in os.listdir(parent_dir):
+    numFrames = 0
+    tempOutputDirectory = os.path.join(parent_dir, foldername)
+    outputdirectory = os.path.join(tempOutputDirectory, 'FramesWithBystanders')
+    folderpath = os.path.join(parent_dir, foldername)
+    try:
+        os.mkdir(outputdirectory)
+    except:
+        print("Directory exists, not creating new one")
+    for filename in os.listdir(folderpath):
+        f = os.path.join(folderpath, filename)
+        # checking if it is a file
+        if os.path.isfile(f):
+            img = cv2.imread(f)
+            color = (0,255,0)
+            detector = FaceDetector.build_model(backends[3])
+            vettedDetections = []
+            detections = detector.detect_faces(img)
+            for face in detections:
+                score = face["confidence"]
+                if score > 0.90:
+                    x, y, w, h = face["box"]
+                    detected_face = img[int(y):int(y+h), int(x):int(x+w)]
+                    analysis = DeepFace.analyze(detected_face, enforce_detection=False)
+                    if(analysis["emotion"][analysis["dominant_emotion"]] > 90 or analysis["race"][analysis["dominant_race"]] > 90):
+                        vettedDetections.append(face["box"])
 
-print("Total faces: " + str(numFaces) + " in " + str(numFrames) + " frames.")
+        if len(vettedDetections) > 0:
+            drawBoundingBoxes(img, outputdirectory, str(numFrames) + '.png', vettedDetections, color)
+        numFrames += 1
+
+print("Total faces: " + str(numFaces) + " in " + str(numFrames+1) + " frames.")
+
+#while True:
+ #  pass

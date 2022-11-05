@@ -17,17 +17,8 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     private SpatialAnchorManager _spatialAnchorManager = null;
     private GameObject anchorParent;
     public string anchorIdentifier = null;
-    public bool retrievingAnchor = false;
+    public bool retrievingAnchor = true;
 
-    /// <summary>
-    /// Used to keep track of all GameObjects that represent a found or created anchor
-    /// </summary>
-    private List<GameObject> _foundOrCreatedAnchorGameObjects = new List<GameObject>();
-
-    /// <summary>
-    /// Used to keep track of all the created Anchor IDs
-    /// </summary>
-    private List<String> _createdAnchorIDs = new List<String>();
 
     // Start is called before the first frame update
     async void Start()
@@ -43,12 +34,6 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
         await _spatialAnchorManager.StartSessionAsync();
 
 
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public async Task<string> createAnchor()
@@ -80,9 +65,7 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             }
 
             Debug.Log($"ASA - Saved cloud anchor with ID: {cloudSpatialAnchor.Identifier}");
-            _foundOrCreatedAnchorGameObjects.Add(anchorParent);
-            _createdAnchorIDs.Add(cloudSpatialAnchor.Identifier);
-            
+            retrievingAnchor = false;
             return cloudSpatialAnchor.Identifier;
         }
         catch (Exception exception)
@@ -96,23 +79,11 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
     }
 
     /// <summary>
-    /// Destroys all Anchor GameObjects
-    /// </summary>
-    public void RemoveAllAnchorGameObjects()
-    {
-        foreach (var anchorGameObject in _foundOrCreatedAnchorGameObjects)
-        {
-            Destroy(anchorGameObject);
-        }
-        _foundOrCreatedAnchorGameObjects.Clear();
-    }
-
-    /// <summary>
     /// Looking for anchors with ID in _createdAnchorIDs
     /// </summary>
     public void LocateAnchor(string identifier)
     {
-        retrievingAnchor = true;
+        
         string[] identifiers = new string[1];
         identifiers[0] = identifier;
         //Create watcher to look for all stored anchor IDs
@@ -138,13 +109,15 @@ public class AzureSpatialAnchorsScript : MonoBehaviour
             //Creating and adjusting GameObjects have to run on the main thread. We are using the UnityDispatcher to make sure this happens.
             UnityDispatcher.InvokeOnAppThread(() =>
             {
+                var clientAnchorParent = GameObject.Find("AnchorParent");
                 // Read out Cloud Anchor values
                 CloudSpatialAnchor cloudSpatialAnchor = args.Anchor;
 
                 // Link to Cloud Anchor
-                anchorParent.AddComponent<CloudNativeAnchor>().CloudToNative(cloudSpatialAnchor);
-                _foundOrCreatedAnchorGameObjects.Add(anchorParent);
+                clientAnchorParent.AddComponent<CloudNativeAnchor>().CloudToNative(cloudSpatialAnchor);
             });
         }
+
+        retrievingAnchor = false;
     }
 }

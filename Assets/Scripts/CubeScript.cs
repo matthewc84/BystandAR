@@ -3,8 +3,18 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
-public class CubeScript : MonoBehaviour, IPunInstantiateMagicCallback, IMixedRealityFocusHandler
+public class CubeScript : MonoBehaviourPunCallbacks, IPunInstantiateMagicCallback, IMixedRealityFocusHandler, IPunObservable
 {
+
+    void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+
+        this.gameObject.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
+
+
+    }
+
     public void OnFocusEnter(FocusEventData eventData)
     {
         // ask the photonview for permission
@@ -22,4 +32,13 @@ public class CubeScript : MonoBehaviour, IPunInstantiateMagicCallback, IMixedRea
 
 
     }
+
+    #region IPunObservable implementation
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+
+    }
+
+    #endregion
 }
