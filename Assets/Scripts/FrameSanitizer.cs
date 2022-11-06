@@ -120,7 +120,7 @@ namespace BystandAR
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
-            //StartCoroutine(FramerateCountLoop());
+            StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             //tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
@@ -137,6 +137,7 @@ namespace BystandAR
         try
         {
             _networkModel = new NetworkModel();
+            _networkModel.InitFaceDetector();
         }
         catch (Exception ex)
         {
@@ -213,7 +214,7 @@ namespace BystandAR
                     if (SanitizeFrames)
                     {
                         depthData = RetreiveDepthFrame();
-                        SanitizedFrames sanitizedFrame = SanitizeFrame(ref returnFrame, ref depthData);
+                        SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
 
                         if (OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && (clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf
                             && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer))
@@ -333,7 +334,7 @@ namespace BystandAR
         return null;
     }
 
-        private SanitizedFrames SanitizeFrame(ref Frame returnFrame, ref byte[] depthFrame)
+        private SanitizedFrames SanitizeFrame(Frame returnFrame, byte[] depthFrame)
         {
 
             byte[] depthBytesWithoutBystanders = null;

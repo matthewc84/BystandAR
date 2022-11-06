@@ -17,6 +17,7 @@ namespace BystandAR
         public GameObject clientPrefabImages;
         public GameObject clientPrefabDepth;
         string identifier = null;
+        bool RPCSent = false;
 
         // Start is called before the first frame update
         #region MonoBehaviour CallBacks
@@ -24,7 +25,7 @@ namespace BystandAR
         /// <summary>
         /// MonoBehaviour method called on GameObject by Unity during early initialization phase.
         /// </summary>
-        void Awake()
+        async void Awake()
         {
             DontDestroyOnLoad(this.gameObject);
             // #Important
@@ -33,10 +34,13 @@ namespace BystandAR
             {
                 PlayerManager.LocalPlayerInstance = this.gameObject;
             }
+            if (PhotonNetwork.IsMasterClient && photonView.IsMine)
+            {
+                identifier = await GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>().createAnchor();
+            }
 
             this.gameObject.transform.SetParent(GameObject.Find("AnchorParent").transform, false);
-
-
+            
         }
 
 
@@ -51,11 +55,11 @@ namespace BystandAR
 
             }
 
-            if (PhotonNetwork.IsMasterClient && photonView.IsMine && PhotonNetwork.InRoom && identifier == null)
+            if (PhotonNetwork.IsMasterClient && photonView.IsMine && PhotonNetwork.InRoom && identifier != null && !RPCSent)
             {
-                identifier = await GameObject.Find("AzureSpatialAnchors").GetComponent<AzureSpatialAnchorsScript>().createAnchor();
+                
                 photonView.RPC("SendIdentifier", RpcTarget.OthersBuffered, identifier);
-
+                RPCSent = true;
                 Debug.Log("Anchor Created");
                 GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
                 GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
