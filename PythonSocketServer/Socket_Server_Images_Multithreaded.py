@@ -23,6 +23,7 @@ print_lock = threading.RLock()
 # thread function
 def threaded(c):
     frameCounter = 0
+    doubleCount = True
     currentDatetime = datetime.datetime.now()
     parent_dir = os.getcwd() + "\\FrameCaptures"
     path = os.path.join(parent_dir, currentDatetime.strftime("%m%d%Y%H%M%S"))
@@ -30,9 +31,17 @@ def threaded(c):
     print("Directory '% s' created" % path)
     while True:
         print_lock.acquire()
-        filenameJPG = str(frameCounter) + ".jpg"
-        filePathJPG = os.path.join(path, filenameJPG)
-        frameCounter += 1
+
+        if doubleCount:
+            filenameJPG = str(f'{frameCounter:03d}') + ".jpg"
+            filePathJPG = os.path.join(path, filenameJPG)
+            frameCounter += 1
+            doubleCount = False
+        else:
+            filenameJPG = str(f'{frameCounter:03d}') + 'a' + ".jpg"
+            filePathJPG = os.path.join(path, filenameJPG)
+            doubleCount = True
+
         data = c.recv(4)
         
         length = int.from_bytes(data, "little")

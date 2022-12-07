@@ -8,7 +8,7 @@ import cv2
 import matplotlib.pyplot as plt
 from mtcnn import MTCNN
 
-def drawBoundingBoxes(imageData, outputdirectory, imageOutputName, inferenceResults, color):
+def drawBoundingBoxes(imageData, outputdirectory, imageOutputName, inferenceResults, race, emotion, gender, age, color):
     """Draw bounding boxes on an image.
     imageData: image data in numpy array format
     imageOutputPath: output image file path
@@ -25,7 +25,11 @@ def drawBoundingBoxes(imageData, outputdirectory, imageOutputName, inferenceResu
         imgHeight, imgWidth, _ = imageData.shape
         thick = int((imgHeight + imgWidth) // 900)
         cv2.rectangle(imageData,(left, top), (right, bottom), color, thick)
-        #cv2.putText(imageData, label, (left, top - 12), 0, 1e-3 * imgHeight, color, thick//3)
+        #cv2.rectangle(imageData,(left, bottom), (left+200, bottom+100), (255,255,255), -1)
+        #cv2.putText(imageData, race, (left, bottom+20), 0, 1e-3 * imgHeight, (0,0,0), 2)
+        #cv2.putText(imageData, emotion, (left, bottom+40), 0, 1e-3 * imgHeight, (0,0,0), 2)
+        #cv2.putText(imageData, gender, (left, bottom+60), 0, 1e-3 * imgHeight, (0,0,0), 2)
+        #cv2.putText(imageData, age, (left, bottom+80), 0, 1e-3 * imgHeight, (0,0,0), 2)
 
     cv2.imwrite(imageOutputPath, imageData)
 
@@ -39,7 +43,7 @@ parent_dir = os.getcwd() + "\\BystandAR Testing\\All Tests\\"
 for foldername in os.listdir(parent_dir):
     numFrames = 0
     tempOutputDirectory = os.path.join(parent_dir, foldername)
-    outputdirectory = os.path.join(tempOutputDirectory, 'FramesWithFaces')
+    outputdirectory = os.path.join(tempOutputDirectory, 'FramesWithBystanders')
     folderpath = os.path.join(parent_dir, foldername)
     try:
         os.mkdir(outputdirectory)
@@ -56,12 +60,15 @@ for foldername in os.listdir(parent_dir):
             detections = detector.detect_faces(img)
             for face in detections:
                 score = face["confidence"]
-                if score > 0.50:
+                if score > 0.90:
                     x, y, w, h = face["box"]
-                    vettedDetections.append(face["box"])
+                    detected_face = img[int(y):int(y+h), int(x):int(x+w)]
+                    analysis = DeepFace.analyze(detected_face, enforce_detection=False)
+                    if(analysis["emotion"][analysis["dominant_emotion"]] > 70 or analysis["race"][analysis["dominant_race"]] > 70):
+                        vettedDetections.append(face["box"])
 
         if len(vettedDetections) > 0:
-            drawBoundingBoxes(img, outputdirectory, str(numFrames) + '.png', vettedDetections, color)
+            drawBoundingBoxes(img, outputdirectory, str(numFrames) + '.png', vettedDetections, "Race: " + analysis["dominant_race"], "Emotion: " + analysis["dominant_emotion"], "Gender: " + str(analysis["gender"]), "Age: " + str(analysis["age"]), color)
         numFrames += 1
 
 print("Total faces: " + str(numFaces) + " in " + str(numFrames+1) + " frames.")
