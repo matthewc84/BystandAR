@@ -16,3 +16,21 @@ Open BystandAR.sln in Visual Studio (ensure VS installed)
 ![image](https://user-images.githubusercontent.com/87574595/215337661-34552939-3670-41ca-8d09-6a06756c710f.png)
 
 Deploy to your HoloLens 2
+
+NOTE:
+If you want to offload sanitized frames for testing, please see below:
+
+![image](https://user-images.githubusercontent.com/87574595/215337801-4f496138-60a1-44c0-af5b-b654db246c82.png)
+
+The "Frame Sanitizer" class has all options related to inference interval, and debugging outputs (see above). The solution will need to be build with these set before deployment.
+- "Sampling Interval" is how often the prototype uses a raw RGB frame to find faces
+- "Frame Capture Interval" is how often the sanatized frames are offloaded to the Socket server (must be configured with the right IP and running)
+- "Offload Sanitized Frames..." is the option to allow the offload of sanatized frames to the server (boolean)
+- "Record Eye Gaze" shows green dots on the sanaitized images to debug the user's eye gaze location. Will be included in frames offloaded to socket server if selected
+
+
+If using Azure Spatial Anchors (ASA) as part of the multi-user evaluation, see below
+
+Update the ASA account info (example here: https://learn.microsoft.com/en-us/azure/spatial-anchors/quickstarts/get-started-unity-hololens?tabs=azure-portal) before attempting to use this feature/testing method.
+
+![image](https://user-images.githubusercontent.com/87574595/215338131-c5234df4-52a8-4a8d-b792-9fa470c3388d.png)
