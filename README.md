@@ -17,6 +17,8 @@ Open BystandAR.sln in Visual Studio (ensure VS installed)
 
 Deploy to your HoloLens 2
 
+NOTE: You MUST have developer mode enabled for the prototype to run. See this link for more info: https://learn.microsoft.com/en-us/windows/mixed-reality/develop/advanced-concepts/using-the-windows-device-portal
+
 NOTE:
 If you want to offload sanitized frames for testing, please see below:
 
