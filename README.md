@@ -26,10 +26,11 @@ If you want to offload sanitized frames for testing, please see below:</b>
 
 ![image](https://user-images.githubusercontent.com/87574595/215337801-4f496138-60a1-44c0-af5b-b654db246c82.png)
 
-The "Frame Sanitizer" class has all options related to inference interval, and debugging outputs (see above). The solution will need to be build with these set before deployment.
+The "Frame Sanitizer" class has all options related to inference interval, frame sanitization, and debugging outputs (see above). The solution will need to be build with these set before deployment.
 - "Sampling Interval" is how often the prototype uses a raw RGB frame to find faces
 - "Frame Capture Interval" is how often the sanatized frames are offloaded to the Socket server (must be configured with the right IP and running)
-- "Offload Sanitized Frames..." is the option to allow the offload of sanatized frames to the server (boolean) NOTE: This option will simulate having a third party application request frames, and incur the frame rate hit that is mentioned in the paper.
+- "Offload Sanitized Frames..." is the option to allow the offload of sanatized frames to the server (boolean) 
+- "Sanintize Frames" This option will simulate having a third party application request frames, and incur the frame rate hit that is mentioned in the paper.
 - "Record Eye Gaze" shows green dots on the sanaitized images to debug the user's eye gaze location. Will be included in frames offloaded to socket server if selected
 
 <b>To use the custom Socket servers for offloading sanitized frames, see below:</b>
