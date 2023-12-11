@@ -19,12 +19,12 @@ namespace BystandAR
 
         public GameObject buttonParent;
         public GameObject _interviewQuestions;
-        public GameObject _socketClientImages;
-        public GameObject _socketClientDepth;
+        //public GameObject _socketClientImages;
+        //public GameObject _socketClientDepth;
         public GameObject _spawnCube;
-        public GameObject _launcher;
-        public GameObject _gameManager;
-        public GameObject _anchorManager;
+        //public GameObject _launcher;
+        //public GameObject _gameManager;
+        //public GameObject _anchorManager;
 
 
 
@@ -39,7 +39,7 @@ namespace BystandAR
             buttonParent.SetActive(false);
         }
 
-        public void startBlocksNoLoggingPressed()
+        /*public void startBlocksNoLoggingPressed()
         {
 
             _launcher.SetActive(true);
@@ -47,17 +47,17 @@ namespace BystandAR
             _spawnCube.SetActive(true);
             buttonParent.SetActive(false);
 
-        }
+        }*/
 
         public void startInterviewLoggingPressed()
         {
             _interviewQuestions.SetActive(true);
-            GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
-            GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
+            //GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketImagesInstance.SetActive(true);
+            //GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>().clientSocketDepthInstance.SetActive(true);
             buttonParent.SetActive(false);
         }
 
-        public void startBlocksLoggingPressed()
+        /*public void startBlocksLoggingPressed()
         {
 
 
@@ -66,7 +66,7 @@ namespace BystandAR
             _spawnCube.SetActive(true);
             buttonParent.SetActive(false);
 
-        }
+        }*/
 
     }
 }

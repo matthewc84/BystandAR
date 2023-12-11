@@ -78,12 +78,12 @@ namespace BystandAR
         public GameObject objectOutlineCube;
         public int samplingInterval;
         public int frameCaptureInterval;
-        public bool OffLoadSanitizedFramesToServer;
+        //public bool OffLoadSanitizedFramesToServer;
         public bool SanitizeFrames;
         public bool recordEyeGazePosition;
         public bool userSpeaking;
-        public GameObject clientSocketImagesInstance;
-        public GameObject clientSocketDepthInstance;
+        //public GameObject clientSocketImagesInstance;
+        //public GameObject clientSocketDepthInstance;
 
 
         // Private fields
@@ -92,8 +92,8 @@ namespace BystandAR
         private Texture2D tempImageTexture;
         private MediaCaptureUtility _mediaCaptureUtility;
         private float averageAmplitude = 0.0f;
-        private SocketClientImages clientSocketImagesScript = null;
-        private SocketClientDepth clientSocketDepthScript = null;
+        //private SocketClientImages clientSocketImagesScript = null;
+        //private SocketClientDepth clientSocketDepthScript = null;
         private Color32[] eyeColors;
         private static Mutex mut = new Mutex();
 
@@ -124,8 +124,8 @@ namespace BystandAR
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             //tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
-            clientSocketImagesScript = clientSocketImagesInstance.GetComponent<SocketClientImages>();
-            clientSocketDepthScript = clientSocketDepthInstance.GetComponent<SocketClientDepth>();
+            //clientSocketImagesScript = clientSocketImagesInstance.GetComponent<SocketClientImages>();
+            //clientSocketDepthScript = clientSocketDepthInstance.GetComponent<SocketClientDepth>();
 
             eyeColors = new Color32[10 * 10];
             for (var i = 0; i < eyeColors.Length; ++i)
@@ -216,20 +216,19 @@ namespace BystandAR
                         depthData = RetreiveDepthFrame();
                         SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
 
-                        if (OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && (clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf
-                            && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer))
+                        /*if (frameCaptureCounter > frameCaptureInterval)
                         {
                             frameCaptureCounter = 0;
 
-                            clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
+                            //clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
                             //clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame);
-                            if (sanitizedFrame.sanitizedDepthFrame != null)
+                            /*if (sanitizedFrame.sanitizedDepthFrame != null)
                             {
                                 clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
-                            }
+                            }*/
 
 
-                        }
+                        }*/
 
 
                     }
