@@ -85,7 +85,6 @@ namespace BystandAR
         public GameObject clientSocketImagesInstance;
         public GameObject clientSocketDepthInstance;
 
-
         // Private fields
         private NetworkModel _networkModel;
         private byte[] depthData = null;
@@ -96,13 +95,16 @@ namespace BystandAR
         private SocketClientDepth clientSocketDepthScript = null;
         private Color32[] eyeColors;
         private static Mutex mut = new Mutex();
-
-
-
+        // Quad code
+        [SerializeField]
+        private GameObject DisplayQuad;
 
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
+
+    // Quad code
+    private Renderer DisplayQuadRenderer;
 
 #endif
 
@@ -116,7 +118,6 @@ namespace BystandAR
 
         async void Start()
         {
-
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
@@ -134,6 +135,9 @@ namespace BystandAR
             }
 
 #if ENABLE_WINMD_SUPPORT
+        // Quad code
+        DisplayQuadRenderer = DisplayQuad.GetComponent<Renderer>();
+
         try
         {
             _networkModel = new NetworkModel();
@@ -177,9 +181,7 @@ namespace BystandAR
         {
             Debug.Log("Error starting research mode:" + ex.Message);
 
-        }
-
-        
+        }     
 #endif
 
         }
@@ -215,7 +217,32 @@ namespace BystandAR
                     {
                         depthData = RetreiveDepthFrame();
                         SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
+                        
+                        if(sanitizedFrame.sanitizedImageFrame)
+                        {
+                            Debug.Log("Inside IF. sanitizedFrame.sanitizedImageFrame.format: " + sanitizedFrame.sanitizedImageFrame.format);
 
+                            // DisplayQuadRenderer.material.color = Color.red;
+                            
+                            
+                            // sanitized frame is upside down, flip it 180
+                            Color[] pixels = sanitizedFrame.sanitizedImageFrame.GetPixels();
+                            Array.Reverse(pixels);
+                            sanitizedFrame.sanitizedImageFrame.SetPixels(pixels);
+                            
+                            DisplayQuadRenderer.material.mainTexture = sanitizedFrame.sanitizedImageFrame;
+                            sanitizedFrame.sanitizedImageFrame.Apply();
+
+                            Debug.Log("Texture updated successfully");
+                        }
+                        else
+                        {
+                            Debug.Log("Inside ELSE. Unable to Load texture...");
+                        }
+                        
+
+                        // commenting out the socket code
+                        /*
                         if (OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && (clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf
                             && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer))
                         {
@@ -227,9 +254,8 @@ namespace BystandAR
                             {
                                 clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
                             }
-
-
                         }
+                        */
 
 
                     }
