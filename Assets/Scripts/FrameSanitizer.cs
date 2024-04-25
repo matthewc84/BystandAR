@@ -77,14 +77,10 @@ namespace BystandAR
         // Public fields
         public GameObject objectOutlineCube;
         public int samplingInterval;
-        public int frameCaptureInterval;
-        public bool OffLoadSanitizedFramesToServer;
         public bool SanitizeFrames;
-        public bool recordEyeGazePosition;
         public bool userSpeaking;
-        public GameObject clientSocketImagesInstance;
-        public GameObject clientSocketDepthInstance;
-
+        public GameObject imagePreviewPlane;
+        public GameObject longDepthPreviewPlane;
 
         // Private fields
         private NetworkModel _networkModel;
@@ -92,12 +88,12 @@ namespace BystandAR
         private Texture2D tempImageTexture;
         private MediaCaptureUtility _mediaCaptureUtility;
         private float averageAmplitude = 0.0f;
-        private SocketClientImages clientSocketImagesScript = null;
-        private SocketClientDepth clientSocketDepthScript = null;
         private Color32[] eyeColors;
         private static Mutex mut = new Mutex();
-
-
+        private Material imageMediaMaterial = null;
+        private Texture2D imageMediaTexture = null;
+        private Material longDepthMediaMaterial = null;
+        private Texture2D longDepthMediaTexture = null;
 
 
 #if ENABLE_WINMD_SUPPORT
@@ -122,15 +118,20 @@ namespace BystandAR
             samplingCounter = samplingInterval;
             StartCoroutine(FramerateCountLoop());
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
-            //tempImageTexture = new Texture2D(1280, 720, TextureFormat.BGRA32, false);
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
-            clientSocketImagesScript = clientSocketImagesInstance.GetComponent<SocketClientImages>();
-            clientSocketDepthScript = clientSocketDepthInstance.GetComponent<SocketClientDepth>();
 
-            eyeColors = new Color32[10 * 10];
-            for (var i = 0; i < eyeColors.Length; ++i)
+            if (imagePreviewPlane != null)
             {
-                eyeColors[i] = Color.green;
+                imageMediaMaterial = imagePreviewPlane.GetComponent<MeshRenderer>().material;
+                imageMediaTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
+                imageMediaMaterial.mainTexture = imageMediaTexture;
+            }
+
+            if (longDepthPreviewPlane != null)
+            {
+                longDepthMediaMaterial = longDepthPreviewPlane.GetComponent<MeshRenderer>().material;
+                longDepthMediaTexture = new Texture2D(320, 288, TextureFormat.Alpha8, false);
+                longDepthMediaMaterial.mainTexture = longDepthMediaTexture;
             }
 
 #if ENABLE_WINMD_SUPPORT
@@ -159,8 +160,10 @@ namespace BystandAR
 
 
         worldSpatialCoordinateSystem = PerceptionInterop.GetSceneCoordinateSystem(Pose.identity) as SpatialCoordinateSystem;
+        
 
-        try
+
+        /*try
         {
             researchMode = new HL2ResearchMode();
 
@@ -177,9 +180,8 @@ namespace BystandAR
         {
             Debug.Log("Error starting research mode:" + ex.Message);
 
-        }
+        }*/
 
-        
 #endif
 
         }
@@ -189,7 +191,6 @@ namespace BystandAR
 
 #if ENABLE_WINMD_SUPPORT
         samplingCounter += 1;
-        frameCaptureCounter += 1;
 
         if (_mediaCaptureUtility.IsCapturing)
         {
@@ -213,24 +214,12 @@ namespace BystandAR
                 {
                     if (SanitizeFrames)
                     {
-                        depthData = RetreiveDepthFrame();
+                        //depthData = RetreiveDepthFrame();
                         SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
-
-                        if (OffLoadSanitizedFramesToServer && frameCaptureCounter > frameCaptureInterval && (clientSocketImagesInstance.activeSelf && clientSocketDepthInstance.activeSelf
-                            && clientSocketImagesScript.connectedToServer && clientSocketDepthScript.connectedToServer))
-                        {
-                            frameCaptureCounter = 0;
-
-                            clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame.EncodeToJPG());
-                            //clientSocketImagesScript.inputFrames.Enqueue(sanitizedFrame.sanitizedImageFrame);
-                            if (sanitizedFrame.sanitizedDepthFrame != null)
-                            {
-                                clientSocketDepthScript.inputFrames.Enqueue(sanitizedFrame.sanitizedDepthFrame);
-                            }
-
-
-                        }
-
+                        Graphics.CopyTexture(sanitizedFrame.sanitizedImageFrame,imageMediaTexture);
+                        imageMediaTexture.Apply();
+                        //longDepthMediaTexture.LoadRawTextureData(sanitizedFrame.sanitizedDepthFrame);
+                        //longDepthMediaTexture.Apply();
 
                     }
 
@@ -315,7 +304,7 @@ namespace BystandAR
  
     }
 
-    private byte[] RetreiveDepthFrame()
+    /*private byte[] RetreiveDepthFrame()
     {
  
         if (researchMode.LongDepthMapTextureUpdated())
@@ -332,12 +321,12 @@ namespace BystandAR
         }
 
         return null;
-    }
+    }*/
 
         private SanitizedFrames SanitizeFrame(Frame returnFrame, byte[] depthFrame)
         {
 
-            byte[] depthBytesWithoutBystanders = null;
+            //byte[] depthBytesWithoutBystanders = null;
             byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
 
             System.Numerics.Matrix4x4 worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
@@ -345,11 +334,11 @@ namespace BystandAR
             returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
             tempImageTexture.LoadRawTextureData(imageBytesWithoutBystanders);
 
-            if (depthFrame != null)
+            /*if (depthFrame != null)
             {
                 depthBytesWithoutBystanders = new byte[Buffer.ByteLength(depthFrame)];
                 depthFrame.CopyTo(depthBytesWithoutBystanders, 0);
-            }
+            }*/
 
 
             SanitizedFrames tempSanitizedFrames = new SanitizedFrames();
@@ -406,7 +395,7 @@ namespace BystandAR
                         scaledImageHeight = boundingBoxScript.bboxHeight;
                     }
 
-                    if (depthFrame != null)
+                    /*if (depthFrame != null)
                     {
 
                         for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
@@ -417,7 +406,7 @@ namespace BystandAR
                             }
                         }
 
-                    }
+                    }*/
 
                     Color32[] colors = new Color32[(int)scaledImageWidth * (int)scaledImageHeight];
                     tempImageTexture.SetPixels32((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
@@ -425,87 +414,10 @@ namespace BystandAR
                 }
             }
 
-            foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBoxHL2User"))
-            {
-                var boundingBoxScript = face.GetComponent<PlayerBoundingBoxScript>();
-                Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
-                float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
-                float angle = Mathf.Acos(dot);
-
-                if (boundingBoxScript.toObscure && angle < 0.62F)
-                {
-                    Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
-                    Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
-
-                    var xCoordDepth = Mathf.Max((float)(projected2DPoint.X * depthToImageWidthRatio) - (float)((boundingBoxScript.bboxWidth * depthToImageWidthRatio) / 2.0F) + 20, 0);
-                    var yCoordDepth = Mathf.Max(((float)(projected2DPoint.Y * depthToImageHeightRatio) - (float)((boundingBoxScript.bboxHeight * depthToImageHeightRatio) / 2.0F) - 40), 0);
-                    xCoordDepth = Mathf.Clamp(xCoordDepth, 0f, 320f);
-                    yCoordDepth = Mathf.Clamp(yCoordDepth, 0f, 288f);
-
-                    var scaledDepthBoxWidth = Mathf.Min(xCoordDepth + (boundingBoxScript.bboxWidth * depthToImageWidthRatio), 320f);
-                    var scaledDepthBoxHeight = Mathf.Min(yCoordDepth + (boundingBoxScript.bboxHeight * depthToImageHeightRatio) * 3, 288f);
-
-
-                    float scaledImageHeight;
-                    float scaledImageWidth;
-
-                    var xCoordImage = Mathf.Max((float)projected2DPoint.X - (boundingBoxScript.bboxWidth / 2.0F), 0);
-                    var yCoordImage = Mathf.Max((float)projected2DPoint.Y - (boundingBoxScript.bboxHeight / 2.0F), 0);
-                    xCoordImage = Mathf.Clamp(xCoordImage, 0f, (float)returnFrame.bitmap.PixelWidth);
-                    yCoordImage = Mathf.Clamp(yCoordImage, 0f, (float)returnFrame.bitmap.PixelHeight);
-                    if ((xCoordImage + boundingBoxScript.bboxWidth) >= (float)returnFrame.bitmap.PixelWidth)
-                    {
-                        scaledImageWidth = ((float)returnFrame.bitmap.PixelWidth - xCoordImage);
-                    }
-                    else
-                    {
-                        scaledImageWidth = boundingBoxScript.bboxWidth;
-                    }
-
-                    if ((yCoordImage + boundingBoxScript.bboxHeight) >= (float)returnFrame.bitmap.PixelHeight)
-                    {
-
-                        scaledImageHeight = ((float)returnFrame.bitmap.PixelHeight - yCoordImage);
-                    }
-                    else
-                    {
-                        scaledImageHeight = boundingBoxScript.bboxHeight;
-                    }
-
-                    if (depthFrame != null)
-                    {
-
-                        for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
-                        {
-                            for (uint columns = (uint)xCoordDepth; columns < scaledDepthBoxWidth; columns++)
-                            {
-                                depthBytesWithoutBystanders[(rows * 320) + columns] = depthBytesWithoutBystanders[(rows * 320) + (uint)xCoordDepth];
-                            }
-                        }
-
-                    }
-
-                    Color32[] colors = new Color32[(int)scaledImageWidth * (int)scaledImageHeight];
-                    tempImageTexture.SetPixels32((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
-
-                }
-            }
-            
-            if (recordEyeGazePosition)
-            {
-                
-                Vector3 cameraSpaceEyeDirectionCoordinate = unityWorldToCamera.MultiplyPoint(eyeGazeProvider.GazeOrigin + eyeGazeProvider.GazeDirection);
-                Point projected2DEyeGazePoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceEyeDirectionCoordinate));
-                if(projected2DEyeGazePoint.X <= returnFrame.bitmap.PixelWidth-10 && projected2DEyeGazePoint.Y <= returnFrame.bitmap.PixelHeight-10 && projected2DEyeGazePoint.X >= 0 && projected2DEyeGazePoint.Y >= 0)
-                {
-                    tempImageTexture.SetPixels32((int)projected2DEyeGazePoint.X, (int)projected2DEyeGazePoint.Y, 10, 10, eyeColors, 0);
-                    
-                }
-                
-            }
+           
 
             tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
-            tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
+            //tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
             return tempSanitizedFrames;
         }
 
