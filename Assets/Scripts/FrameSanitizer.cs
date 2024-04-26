@@ -163,7 +163,7 @@ namespace BystandAR
         
 
 
-        /*try
+        try
         {
             researchMode = new HL2ResearchMode();
 
@@ -180,7 +180,7 @@ namespace BystandAR
         {
             Debug.Log("Error starting research mode:" + ex.Message);
 
-        }*/
+        }
 
 #endif
 
@@ -214,12 +214,16 @@ namespace BystandAR
                 {
                     if (SanitizeFrames)
                     {
-                        //depthData = RetreiveDepthFrame();
+                        depthData = RetreiveDepthFrame();
                         SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
                         Graphics.CopyTexture(sanitizedFrame.sanitizedImageFrame,imageMediaTexture);
                         imageMediaTexture.Apply();
-                        //longDepthMediaTexture.LoadRawTextureData(sanitizedFrame.sanitizedDepthFrame);
-                        //longDepthMediaTexture.Apply();
+                        if (sanitizedFrame.sanitizedDepthFrame != null)
+                        {
+                            longDepthMediaTexture.LoadRawTextureData(sanitizedFrame.sanitizedDepthFrame);
+                            longDepthMediaTexture.Apply();
+                        }
+
 
                     }
 
@@ -304,7 +308,7 @@ namespace BystandAR
  
     }
 
-    /*private byte[] RetreiveDepthFrame()
+    private byte[] RetreiveDepthFrame()
     {
  
         if (researchMode.LongDepthMapTextureUpdated())
@@ -321,12 +325,12 @@ namespace BystandAR
         }
 
         return null;
-    }*/
+    }
 
         private SanitizedFrames SanitizeFrame(Frame returnFrame, byte[] depthFrame)
         {
 
-            //byte[] depthBytesWithoutBystanders = null;
+            byte[] depthBytesWithoutBystanders = null;
             byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
 
             System.Numerics.Matrix4x4 worldToCamera = (System.Numerics.Matrix4x4)worldSpatialCoordinateSystem.TryGetTransformTo(returnFrame.spatialCoordinateSystem);
@@ -334,11 +338,11 @@ namespace BystandAR
             returnFrame.bitmap.CopyToBuffer(imageBytesWithoutBystanders.AsBuffer());
             tempImageTexture.LoadRawTextureData(imageBytesWithoutBystanders);
 
-            /*if (depthFrame != null)
+            if (depthFrame != null)
             {
                 depthBytesWithoutBystanders = new byte[Buffer.ByteLength(depthFrame)];
                 depthFrame.CopyTo(depthBytesWithoutBystanders, 0);
-            }*/
+            }
 
 
             SanitizedFrames tempSanitizedFrames = new SanitizedFrames();
@@ -395,7 +399,7 @@ namespace BystandAR
                         scaledImageHeight = boundingBoxScript.bboxHeight;
                     }
 
-                    /*if (depthFrame != null)
+                    if (depthFrame != null)
                     {
 
                         for (uint rows = (uint)yCoordDepth; rows < scaledDepthBoxHeight; rows++)
@@ -406,7 +410,7 @@ namespace BystandAR
                             }
                         }
 
-                    }*/
+                    }
 
                     Color32[] colors = new Color32[(int)scaledImageWidth * (int)scaledImageHeight];
                     tempImageTexture.SetPixels32((int)xCoordImage, (int)yCoordImage, (int)scaledImageWidth, (int)scaledImageHeight, colors, 0);
@@ -417,7 +421,7 @@ namespace BystandAR
            
 
             tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
-            //tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
+            tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
             return tempSanitizedFrames;
         }
 
