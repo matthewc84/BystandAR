@@ -95,6 +95,17 @@ namespace BystandAR
         private Material longDepthMediaMaterial = null;
         private Texture2D longDepthMediaTexture = null;
 
+        [SerializeField]
+        private GameObject Logger;
+        private CSVLogger CSVLoggerScript;
+
+        [SerializeField]
+        private int frameRateFrequency;
+
+        private int faceCounter = 0;
+        private int faceCubeCounter = 1;
+
+        private DateTime lastCallToDrawPred = DateTime.Now;
 
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
@@ -111,12 +122,15 @@ namespace BystandAR
         #region UnityMethods
 
         async void Start()
-        {
-
+        { 
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
             StartCoroutine(FramerateCountLoop());
+
+            //  CSV Logger Script
+            CSVLoggerScript = Logger.GetComponent<CSVLogger>();
+
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
 
@@ -188,7 +202,6 @@ namespace BystandAR
 
         async void Update()
         {
-
 #if ENABLE_WINMD_SUPPORT
         samplingCounter += 1;
 
@@ -201,6 +214,7 @@ namespace BystandAR
                 }
   
                 //evaluate the average amplitude of the collected voice input mic
+                /*
                 if (averageAmplitude > 0.005f)
                 {
                     userSpeaking = true;
@@ -209,6 +223,7 @@ namespace BystandAR
                 {
                     userSpeaking = false;
                 }
+                */
 
                 if (returnFrame != null)
                 {
@@ -271,6 +286,8 @@ namespace BystandAR
     {
 
         //Debug.Log("Number of faces: " + result.Faces.Count());
+        faceCounter = result.Faces.Count();
+
         var cameraToWorld = (System.Numerics.Matrix4x4)returnFrame.spatialCoordinateSystem.TryGetTransformTo(worldSpatialCoordinateSystem);
         UnityEngine.Matrix4x4 unityCameraToWorld = NumericsConversionExtensions.ToUnity(cameraToWorld);
         var pixelsPerMeterAlongX = returnFrame.cameraIntrinsics.FocalLength.X;
@@ -291,7 +308,7 @@ namespace BystandAR
                 if(overlapBoxes.Length > 0 && overlapBoxes[0].gameObject.tag == "BoundingBox")
                 {
                     overlapBoxes[0].gameObject.transform.position = bestRectPositionInWorldspace;
-                    var bboxScript = overlapBoxes[0].gameObject.GetComponent<BoundingBoxScript>();
+                    var bboxScript = overlapBoxes[0].gameObject.GetComponent<BoundingBoxScriptManual>();
                     bboxScript.staleCounter = 0;
                     bboxScript.bboxWidth = (float)face.Width * 1.25f;
                     bboxScript.bboxHeight = (float)face.Height * 1.25f;
@@ -299,7 +316,11 @@ namespace BystandAR
                 else
                 {
                     var newObject = Instantiate(objectOutlineCube, bestRectPositionInWorldspace, Quaternion.identity);
-                    var bboxScript = newObject.GetComponent<BoundingBoxScript>();
+                    
+                    newObject.name = "FaceCube-" + faceCubeCounter.ToString();
+                    faceCubeCounter++;
+
+                    var bboxScript = newObject.GetComponent<BoundingBoxScriptManual>();
                     bboxScript.bboxWidth = (float)face.Width * 1.25f;
                     bboxScript.bboxHeight = (float)face.Height * 1.25f;
                 }
@@ -330,6 +351,66 @@ namespace BystandAR
         private SanitizedFrames SanitizeFrame(Frame returnFrame, byte[] depthFrame)
         {
 
+            /*
+            Debug.Log("GazeOrigin: " + eyeGazeProvider.GazeOrigin);
+            Debug.Log("GazeDirection: " + eyeGazeProvider.GazeDirection);
+            */
+
+            if (Physics.Raycast(eyeGazeProvider.GazeOrigin, eyeGazeProvider.GazeDirection, out RaycastHit hit, 100))
+            {
+                GameObject targetGameObject = hit.transform.gameObject;
+                
+                if (targetGameObject.tag == "BoundingBox")
+                {
+                    Debug.Log("Gaze collision with FaceCube name: " + targetGameObject.name);
+                    
+                    var targetFaceCubeScript = targetGameObject.GetComponent<BoundingBoxScriptManual>();
+                    
+                    if (targetFaceCubeScript.getIslooking() == false)
+                    {
+                        targetFaceCubeScript.setIslooking(true);
+                        targetFaceCubeScript.EyeContactStarted();
+                    }
+                    else
+                    {
+                        targetFaceCubeScript.setIslooking(true);
+                        targetFaceCubeScript.EyeContactMaintained();
+                    }
+
+                    // isLooking for all other facecube's should be false
+
+                    foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
+                    {
+                        if (face.name != targetGameObject.name)
+                        {
+                            var faceCubeScript = face.GetComponent<BoundingBoxScriptManual>();
+                        
+                            if (faceCubeScript.getIslooking() == true)
+                            {
+                                faceCubeScript.EyeContactLost();
+                                faceCubeScript.setIslooking(false);
+                            }   
+                        }
+                    }
+                }
+                else
+                {
+                    // Debug.Log("Eye Gaze not colliding with Face cube");
+                    
+                    foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
+                    {
+                        var faceCubeScript = face.GetComponent<BoundingBoxScriptManual>();
+                        
+                        if (faceCubeScript.getIslooking() == true)
+                        {
+                            faceCubeScript.EyeContactLost();
+                            faceCubeScript.setIslooking(false);
+                        }   
+                    }
+                }
+            }
+
+
             byte[] depthBytesWithoutBystanders = null;
             byte[] imageBytesWithoutBystanders = new byte[8 * returnFrame.bitmap.PixelWidth * returnFrame.bitmap.PixelHeight];
 
@@ -354,13 +435,24 @@ namespace BystandAR
             //for each detection GameObject, we convert the current 3D position to to 2D position of the current depth frame
             foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
                 {
-                var boundingBoxScript = face.GetComponent<BoundingBoxScript>();
+                var boundingBoxScript = face.GetComponent<BoundingBoxScriptManual>();
                 Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
                 float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
                 float angle = Mathf.Acos(dot);
 
-                if (boundingBoxScript.toObscure && angle < 0.62F)
+                // if (boundingBoxScript.toObscure && angle < 0.62F)
+                // {
+                if (!boundingBoxScript.isSubject && angle < 0.62F)
                 {
+                    var lengthOfTime = DateTime.Now - lastCallToDrawPred;
+                    // Debug.Log("Time gap between two drawPred calls: " + lengthOfTime);
+                    lastCallToDrawPred = DateTime.Now;
+
+                    // log drawPredTime to CSV
+                    string writeDateTime = DateTime.Now.ToString("HH-mm-ss");
+                    string DrawPredTimeFileLine = writeDateTime + "," + lengthOfTime.TotalSeconds.ToString();;
+
+                    CSVLoggerScript.addDrawPredTimetoList(DrawPredTimeFileLine);
 
                     Vector3 cameraSpaceCoordinate = unityWorldToCamera.MultiplyPoint(face.transform.position);
                     Point projected2DPoint = returnFrame.cameraIntrinsics.ProjectOntoFrame(NumericsConversionExtensions.ToSystemWithoutConversion(cameraSpaceCoordinate));
@@ -430,8 +522,17 @@ namespace BystandAR
         {
             while (true)
             {
-                yield return new WaitForSeconds(15);
-                Debug.Log("Current Frame Rate: " + (int)(1.0f / Time.smoothDeltaTime));
+                // yield return new WaitForSeconds(15);
+                yield return new WaitForSeconds(frameRateFrequency);
+
+                int FPS = (int)(1.0f / Time.smoothDeltaTime);
+                Debug.Log("Current Frame Rate: " + FPS);
+                
+                // log FPS to CSV
+                string writeDateTime = DateTime.Now.ToString("HH-mm-ss");
+                string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCounter.ToString();
+
+                CSVLoggerScript.addFPStoList(FPSFileLine);
             }
         }
 

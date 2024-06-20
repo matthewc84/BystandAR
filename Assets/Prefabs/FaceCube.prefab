@@ -10,9 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1448730134523851778}
   - component: {fileID: 2587773284355199284}
-  - component: {fileID: -7009120315968318315}
+  - component: {fileID: 3444095338378910304}
   - component: {fileID: -2716397250255789392}
   - component: {fileID: -6058901359513786638}
+  - component: {fileID: 4593281067117882781}
   m_Layer: 0
   m_Name: FaceCube
   m_TagString: BoundingBox
@@ -43,23 +44,48 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1077441217099968542}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &-7009120315968318315
-MonoBehaviour:
+--- !u!23 &3444095338378910304
+MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1077441217099968542}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51bf52072412b04468724f8b21b832c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bboxWidth: 0
-  bboxHeight: 0
-  toObscure: 1
-  isSubject: 0
-  staleCounter: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 50dc523b24a2cfc409af7babd1bddb04, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &-2716397250255789392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,7 +93,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1077441217099968542}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e1e6657bab90ac149872e5361b42ea62, type: 3}
   m_Name: 
@@ -81,7 +107,7 @@ MonoBehaviour:
   onLookAtStart:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -7009120315968318315}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactStarted
         m_Mode: 1
@@ -96,7 +122,7 @@ MonoBehaviour:
   whileLookingAtTarget:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -7009120315968318315}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactMaintained
         m_Mode: 1
@@ -111,7 +137,7 @@ MonoBehaviour:
   onLookAway:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -7009120315968318315}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
         m_MethodName: EyeContactLost
         m_Mode: 1
@@ -126,7 +152,7 @@ MonoBehaviour:
   onDwell:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: -7009120315968318315}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BystandAR.BoundingBoxScript, Assembly-CSharp
         m_MethodName: onDwell
         m_Mode: 1
@@ -161,3 +187,24 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4593281067117882781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077441217099968542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aa4110da3b995e4a8a3b4a69d835a5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bboxWidth: 0
+  bboxHeight: 0
+  toObscure: 1
+  isSubject: 0
+  staleCounter: 0
+  staleThreshold: 90
+  percentEyeAndVoiceContactThreshold: 0.05
+  percentEyeContactThreshold: 0.1
+  staleDetectionLoseThreshold: 50

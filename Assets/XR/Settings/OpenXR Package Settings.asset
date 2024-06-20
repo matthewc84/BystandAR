@@ -374,13 +374,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f0ebc320a151d3408ea1e9fce54d40e, type: 3}
   m_Name: OpenXR Package Settings
   m_EditorClassIdentifier: 
-  Keys: 0100000004000000070000000e0000001c000000
+  Keys: 0100000004000000070000000e0000001c0000000d000000
   Values:
   - {fileID: -7278895718433333468}
   - {fileID: 6318136959274359115}
   - {fileID: 703276103338729703}
   - {fileID: -4444425451496202430}
   - {fileID: -4658170099881301997}
+  - {fileID: 1910107052446013252}
 --- !u!114 &321115984551982291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -469,6 +470,21 @@ MonoBehaviour:
   m_maxBitrate: 20000
   m_videoCodec: 0
   m_enableAudio: 0
+--- !u!114 &1910107052446013252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5a1f07dc5afe854f9f12a4194aca3fb, type: 3}
+  m_Name: WebGL
+  m_EditorClassIdentifier: 
+  features: []
+  m_renderMode: 1
+  m_depthSubmissionMode: 0
 --- !u!114 &2007843027486277884
 MonoBehaviour:
   m_ObjectHideFlags: 0
