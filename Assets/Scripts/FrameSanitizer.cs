@@ -74,6 +74,19 @@ namespace BystandAR
     [RequireComponent(typeof(AudioSource))]
     public class FrameSanitizer : MonoBehaviour
     {
+        [SerializeField]
+        private string ReadGazeOriginFromCSVName = "GazeOrigin2024-18-6--19-45-33.csv";
+        private string GazeOriginFile;
+        [SerializeField]
+        private string ReadGazeDirFromCSVName = "GazeDir2024-18-6--19-45-33.csv";
+        private string GazeDirFile;
+
+        private Queue<Vector3> HardcodedGazeOriginPath = new Queue<Vector3>();
+        private Queue<Vector3> HardcodedGazeDirPath = new Queue<Vector3>();
+
+        Vector3 direction = new Vector3(0, 0, 0);
+        Vector3 origin = new Vector3(0, 0, 0);
+
         // Public fields
         public GameObject objectOutlineCube;
         public int samplingInterval;
@@ -96,6 +109,12 @@ namespace BystandAR
         private Texture2D longDepthMediaTexture = null;
 
         [SerializeField]
+        private GameObject EyeGazeVisualizer;
+        private Renderer EyeGazeVisualizerRenderer;
+        [SerializeField]
+        private bool VisualizationToggle = false;
+
+        [SerializeField]
         private GameObject Logger;
         private CSVLogger CSVLoggerScript;
 
@@ -107,12 +126,19 @@ namespace BystandAR
 
         private DateTime lastCallToDrawPred = DateTime.Now;
 
+        private bool toggleButtonState = false;
+        [SerializeField]
+        private GameObject ToggleButton;
+        // private Renderer ToggleButtonRenderer;
+        [SerializeField]
+        private Vector3 toggleButtonOffset = new Vector3(0.2f, -0.3f, 0.01f);
+
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
 
 #endif
-
+        private int frameCounter = 0;
         int samplingCounter;
         int frameCaptureCounter = 0;
         Microsoft.MixedReality.Toolkit.Input.IMixedRealityEyeGazeProvider eyeGazeProvider;
@@ -121,6 +147,21 @@ namespace BystandAR
 
         #region UnityMethods
 
+        async void Awake()
+        {
+            //  CSV Logger Script
+            CSVLoggerScript = Logger.GetComponent<CSVLogger>();
+
+            if (CSVLoggerScript.getReadGazeFromCSV())
+            {
+                GazeOriginFile = Application.persistentDataPath + "/Logs/" + ReadGazeOriginFromCSVName;
+                HardcodedGazeOriginPath = CSVLoggerScript.loadGazeOriginDataCSV(GazeOriginFile);
+
+                GazeDirFile = Application.persistentDataPath + "/Logs/" + ReadGazeDirFromCSVName;
+                HardcodedGazeDirPath = CSVLoggerScript.loadGazeDirDataCSV(GazeDirFile);
+            }
+        }
+
         async void Start()
         { 
             userSpeaking = false;
@@ -128,8 +169,9 @@ namespace BystandAR
             samplingCounter = samplingInterval;
             StartCoroutine(FramerateCountLoop());
 
-            //  CSV Logger Script
-            CSVLoggerScript = Logger.GetComponent<CSVLogger>();
+            EyeGazeVisualizerRenderer = EyeGazeVisualizer.GetComponent<Renderer>();
+
+            // ToggleButtonRenderer = ToggleButton.GetComponent<Renderer>();
 
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
@@ -202,8 +244,36 @@ namespace BystandAR
 
         async void Update()
         {
+            samplingCounter += 1;
+
+            if (toggleButtonState && CSVLoggerScript.getReadGazeFromCSV())
+            {
+                if (HardcodedGazeOriginPath.Count > 0 && HardcodedGazeDirPath.Count > 0)
+                {
+                    origin = HardcodedGazeOriginPath.Dequeue();
+                    // Debug.Log("origin (from file): " + origin);
+                    direction = HardcodedGazeDirPath.Dequeue();
+                    direction = (direction).normalized;
+                }
+                else
+                {
+                    Debug.Log("Gaze Points ended!!");
+                    origin = new Vector3(0, 0, 0);
+                    direction = new Vector3(0, 0, 0);
+                }
+            }
+            else
+            {
+                origin = eyeGazeProvider.GazeOrigin;
+                direction = eyeGazeProvider.GazeDirection;
+                direction = (direction).normalized;
+            }
+
+            eyeGazeFixationVisualizer();
+
+            UpdateButtonsPosition();
+
 #if ENABLE_WINMD_SUPPORT
-        samplingCounter += 1;
 
         if (_mediaCaptureUtility.IsCapturing)
         {
@@ -211,6 +281,7 @@ namespace BystandAR
                 if (samplingCounter >= samplingInterval || SanitizeFrames)
                 {
                     returnFrame = await _mediaCaptureUtility.GetLatestVideoFrame();
+                    frameCounter++;
                 }
   
                 //evaluate the average amplitude of the collected voice input mic
@@ -279,6 +350,28 @@ namespace BystandAR
         #endregion
 
 
+        private void UpdateButtonsPosition()
+    {
+        ToggleButton.transform.position = Camera.main.transform.position + Camera.main.transform.forward + toggleButtonOffset;
+        ToggleButton.transform.rotation = Camera.main.transform.rotation;
+    }
+
+    public void toggleButtonStateController()
+    {
+        toggleButtonState = !toggleButtonState;
+    }
+
+    private void eyeGazeFixationVisualizer()
+    {
+        if (VisualizationToggle == true)
+        {
+            EyeGazeVisualizerRenderer.transform.position = origin + direction * 2;
+        }
+        else
+        {
+            EyeGazeVisualizerRenderer.enabled = false;
+        }
+    }
 
 #if ENABLE_WINMD_SUPPORT
 
@@ -324,9 +417,7 @@ namespace BystandAR
                     bboxScript.bboxWidth = (float)face.Width * 1.25f;
                     bboxScript.bboxHeight = (float)face.Height * 1.25f;
                 }
-
         }
- 
     }
 
     private byte[] RetreiveDepthFrame()
@@ -356,7 +447,7 @@ namespace BystandAR
             Debug.Log("GazeDirection: " + eyeGazeProvider.GazeDirection);
             */
 
-            if (Physics.Raycast(eyeGazeProvider.GazeOrigin, eyeGazeProvider.GazeDirection, out RaycastHit hit, 100))
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, 100))
             {
                 GameObject targetGameObject = hit.transform.gameObject;
                 
@@ -449,7 +540,7 @@ namespace BystandAR
                     lastCallToDrawPred = DateTime.Now;
 
                     // log drawPredTime to CSV
-                    string writeDateTime = DateTime.Now.ToString("HH-mm-ss");
+                    string writeDateTime = DateTime.Now.ToString("HH-mm-ss.ffff");
                     string DrawPredTimeFileLine = writeDateTime + "," + lengthOfTime.TotalSeconds.ToString();;
 
                     CSVLoggerScript.addDrawPredTimetoList(DrawPredTimeFileLine);
@@ -510,8 +601,6 @@ namespace BystandAR
                 }
             }
 
-           
-
             tempSanitizedFrames.sanitizedImageFrame = tempImageTexture;
             tempSanitizedFrames.sanitizedDepthFrame = depthBytesWithoutBystanders;
             return tempSanitizedFrames;
@@ -529,8 +618,8 @@ namespace BystandAR
                 Debug.Log("Current Frame Rate: " + FPS);
                 
                 // log FPS to CSV
-                string writeDateTime = DateTime.Now.ToString("HH-mm-ss");
-                string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCounter.ToString();
+                string writeDateTime = DateTime.Now.ToString("HH-mm-ss.ffff");
+                string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCounter.ToString() + "," + frameCounter;
 
                 CSVLoggerScript.addFPStoList(FPSFileLine);
             }
