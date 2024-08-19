@@ -80,9 +80,17 @@ namespace BystandAR
         [SerializeField]
         private string ReadGazeDirFromCSVName = "GazeDir2024-18-6--19-45-33.csv";
         private string GazeDirFile;
+        [SerializeField]
+        private string ReadQRDirFromCSVName = "QRDir2024-18-6--19-45-33.csv";
+        private string QRDirFile;
+        [SerializeField]
+        private string ReadQRDistFromCSVName = "QRDist2024-18-6--19-45-33.csv";
+        private string QRDistFile;
 
         private Queue<Vector3> HardcodedGazeOriginPath = new Queue<Vector3>();
         private Queue<Vector3> HardcodedGazeDirPath = new Queue<Vector3>();
+        private Queue<Vector3> HardcodedQRDirPath = new Queue<Vector3>();
+        private Queue<float> HardcodedQRDistPath = new Queue<float>();
 
         Vector3 direction = new Vector3(0, 0, 0);
         Vector3 origin = new Vector3(0, 0, 0);
@@ -133,6 +141,39 @@ namespace BystandAR
         [SerializeField]
         private Vector3 toggleButtonOffset = new Vector3(0.2f, -0.3f, 0.01f);
 
+        [SerializeField]
+        private GameObject ArucoDetectionObject;
+        private ArUcoMarker ArucoDetctionScript;
+
+        private float QRDistMin;
+        private float QRDistMax;
+        private float QRDistMid;
+
+        private float QRDirMinX;
+        private float QRDirMaxX;
+        private float QRDirMidX;
+
+        private float QRDirMinY;
+        private float QRDirMaxY;
+        private float QRDirMidY;
+
+        private float QRDirMinZ;
+        private float QRDirMaxZ;
+        private float QRDirMidZ;
+
+        /*
+        public float boundsBuffer = 0.01f;
+        public float DistBoundsBuffer = 0.1f;
+        */
+
+        private float currDistance;
+        private Vector3 currDirection;
+
+        [SerializeField]
+        private GameObject PositioningCube;
+        private Renderer PositioningCubeRenderer;
+        private Collider PositioningCubeCollider;
+
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
@@ -149,16 +190,57 @@ namespace BystandAR
 
         async void Awake()
         {
+            Debug.Log("In awake");
+
             //  CSV Logger Script
             CSVLoggerScript = Logger.GetComponent<CSVLogger>();
 
+            ArucoDetctionScript = ArucoDetectionObject.GetComponent<ArUcoMarker>();
+
             if (CSVLoggerScript.getReadGazeFromCSV())
             {
+                Debug.Log("getReadGazeFromCSV check passed");
+
                 GazeOriginFile = Application.persistentDataPath + "/Logs/" + ReadGazeOriginFromCSVName;
                 HardcodedGazeOriginPath = CSVLoggerScript.loadGazeOriginDataCSV(GazeOriginFile);
 
                 GazeDirFile = Application.persistentDataPath + "/Logs/" + ReadGazeDirFromCSVName;
                 HardcodedGazeDirPath = CSVLoggerScript.loadGazeDirDataCSV(GazeDirFile);
+
+                QRDirFile = Application.persistentDataPath + "/../Logs/" + ReadQRDirFromCSVName;
+                HardcodedQRDirPath = CSVLoggerScript.loadQRDirDataCSV(QRDirFile);
+
+                QRDirMinX = CSVLoggerScript.getQRDirMinX();
+                QRDirMaxX = CSVLoggerScript.getQRDirMaxX();
+                QRDirMidX = (QRDirMinX + QRDirMaxX) / 2;
+
+                QRDirMinY = CSVLoggerScript.getQRDirMinY();
+                QRDirMaxY = CSVLoggerScript.getQRDirMaxY();
+                QRDirMidY = (QRDirMinY + QRDirMaxY) / 2;
+
+                QRDirMinZ = CSVLoggerScript.getQRDirMinZ();
+                QRDirMaxZ = CSVLoggerScript.getQRDirMaxZ();
+                QRDirMidZ = (QRDirMinZ + QRDirMaxZ) / 2;
+
+                
+                Debug.Log("QRDirMinX: " + QRDirMinX);
+                Debug.Log("QRDirMaxX: " + QRDirMaxX);
+                Debug.Log("QRDirMinY: " + QRDirMinY);
+                Debug.Log("QRDirMaxY: " + QRDirMaxY);
+                Debug.Log("QRDirMinZ: " + QRDirMinZ);
+                Debug.Log("QRDirMaxZ: " + QRDirMaxZ);
+                
+
+                QRDistFile = Application.persistentDataPath + "/../Logs/" + ReadQRDistFromCSVName;
+                HardcodedQRDistPath = CSVLoggerScript.loadQRDistDataCSV(QRDistFile);
+
+                QRDistMin = CSVLoggerScript.getQRDistMin();
+                QRDistMax = CSVLoggerScript.getQRDistMax();
+                QRDistMid = (QRDistMax + QRDistMin) / 2;
+
+               
+                Debug.Log("QRDistMin: " + QRDistMin);
+                Debug.Log("QRDistMax: " + QRDistMax);
             }
         }
 
@@ -170,6 +252,9 @@ namespace BystandAR
             StartCoroutine(FramerateCountLoop());
 
             EyeGazeVisualizerRenderer = EyeGazeVisualizer.GetComponent<Renderer>();
+
+            PositioningCubeRenderer = PositioningCube.GetComponent<Renderer>();
+            PositioningCubeCollider = PositioningCube.GetComponent<Collider>();
 
             // ToggleButtonRenderer = ToggleButton.GetComponent<Renderer>();
 
@@ -189,6 +274,18 @@ namespace BystandAR
                 longDepthMediaTexture = new Texture2D(320, 288, TextureFormat.Alpha8, false);
                 longDepthMediaMaterial.mainTexture = longDepthMediaTexture;
             }
+
+            /*
+            Debug.Log("QRDirMinX: " + QRDirMinX);
+            Debug.Log("QRDirMaxX: " + QRDirMaxX);
+            Debug.Log("QRDirMinY: " + QRDirMinY);
+            Debug.Log("QRDirMaxY: " + QRDirMaxY);
+            Debug.Log("QRDirMinZ: " + QRDirMinZ);
+            Debug.Log("QRDirMaxZ: " + QRDirMaxZ);
+
+            Debug.Log("QRDistMin: " + QRDistMin);
+            Debug.Log("QRDistMax: " + QRDistMax);
+            */
 
 #if ENABLE_WINMD_SUPPORT
         try
@@ -245,6 +342,18 @@ namespace BystandAR
         async void Update()
         {
             samplingCounter += 1;
+
+            PositioningCubePosUpdate();
+
+            bool isInBounds = BoundsCheck();
+            if (isInBounds)
+            {
+                EyeGazeVisualizerRenderer.material.color = Color.green;
+            }
+            else
+            {
+                EyeGazeVisualizerRenderer.material.color = Color.red;
+            }
 
             if (toggleButtonState && CSVLoggerScript.getReadGazeFromCSV())
             {
@@ -350,10 +459,100 @@ namespace BystandAR
         #endregion
 
 
-        private void UpdateButtonsPosition()
+    public void PositioningCubePosUpdate()
+    {
+        // get latest position and rotation of detected QR code 
+        Vector3 currQRPosition = ArucoDetctionScript.getLatestPosition();
+        Quaternion currQRRotation = ArucoDetctionScript.getLatestRotation();
+
+        // place PositioningCube at certain distance and direction w.r.t. the detected QR code
+        /*
+        // this works but depth seems a bit off an y axis is totally in negative
+        Vector3 angle = (currQRPosition - PositioningCubeRenderer.transform.position).normalized;
+        PositioningCubeRenderer.transform.position = currQRPosition + (angle * QRDistMid);
+        */
+
+        Vector3 midDir = new Vector3(QRDirMidX, QRDirMidY, QRDirMidZ);
+        PositioningCubeRenderer.transform.position = currQRPosition - (midDir.normalized * (QRDistMid));
+
+
+        // Debug.Log("PositioningCubeRenderer.transform.position: " + PositioningCubeRenderer.transform.position);
+    }
+
+    private void UpdateButtonsPosition()
     {
         ToggleButton.transform.position = Camera.main.transform.position + Camera.main.transform.forward + toggleButtonOffset;
         ToggleButton.transform.rotation = Camera.main.transform.rotation;
+    }
+
+    public bool BoundsCheck()
+    {
+        /*
+        currDistance = ArucoDetctionScript.getLatestDistance();
+        currDirection = ArucoDetctionScript.getLatestDirection();
+
+        bool DirxBounds = false;
+        bool DiryBounds = false;
+        bool DirzBounds = false;
+        bool distBounds = false;
+
+        if (currDirection.x >= QRDirMinX - boundsBuffer && currDirection.x <= QRDirMaxX + boundsBuffer)
+        {
+            DirxBounds = true;
+        }
+        else
+        {
+            // Debug.Log("X out of bounds");
+        }
+
+
+        if (currDirection.y >= QRDirMinY - boundsBuffer && currDirection.y <= QRDirMaxY + boundsBuffer)
+        {
+            DiryBounds = true;
+        }
+        else
+        {
+            // Debug.Log("Y out of bounds");
+        }
+
+
+        if (currDirection.z >= QRDirMinZ - boundsBuffer && currDirection.z <= QRDirMaxZ + boundsBuffer)
+        {
+            DirzBounds = true;
+        }
+        else
+        {
+            // Debug.Log("Z out of bounds");
+        }
+
+        if (currDistance >= QRDistMin - DistBoundsBuffer && currDistance <= QRDistMax + DistBoundsBuffer)
+        {
+            distBounds = true;
+        }
+        else
+        {
+            // Debug.Log("Distance out of bounds");
+        }
+
+        if (DirxBounds && DiryBounds && DirzBounds && distBounds)
+        {
+            // Debug.Log("in bounds");
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        */
+
+        if (PositioningCubeCollider.bounds.Contains(Camera.main.transform.position))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public void toggleButtonStateController()
@@ -622,6 +821,11 @@ namespace BystandAR
                 string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCounter.ToString() + "," + frameCounter;
 
                 CSVLoggerScript.addFPStoList(FPSFileLine);
+
+                /*
+                Debug.Log("currDistance: " + currDistance);
+                Debug.Log("currDirection: " + currDirection);
+                */
             }
         }
 

@@ -1,10 +1,30 @@
+/*
 using System;
 using System.IO;
-using System.Linq;
+// using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
+*/
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.UI;
+using Unity.Mathematics;
+using Unity.Collections;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.IO;
+using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Utilities;
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.OpenXR;
+
 
 public class CSVLogger : MonoBehaviour
 {
@@ -260,8 +280,11 @@ public class CSVLogger : MonoBehaviour
 
     public Queue<float> loadQRDistDataCSV(string QRDistFile)
     {
+        Debug.Log("Inside loadQRDistDataCSV");
+
         if (File.Exists(QRDistFile))
         {
+            Debug.Log("QRDisFile found in device");
 
             StreamReader strReader = new StreamReader(QRDistFile);
             bool eof = false;
@@ -282,6 +305,10 @@ public class CSVLogger : MonoBehaviour
 
                 QRDistArray.Enqueue(QRDistFloat);
             }
+        }
+        else
+        {
+            Debug.Log("QRDisFile not found");
         }
 
         var QRDistActualArray = QRDistArray.ToArray();

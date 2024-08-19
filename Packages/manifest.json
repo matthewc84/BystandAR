@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.microsoft.mixedreality.movingplatform": "file:MixedReality/com.microsoft.mixedreality.movingplatform-0.0.3.tgz",
-    "com.microsoft.mixedreality.openxr": "file:MixedReality/com.microsoft.mixedreality.openxr-1.4.2.tgz",
+    "com.microsoft.mixedreality.openxr": "file:MixedReality/com.microsoft.mixedreality.openxr-1.10.1.tgz",
     "com.microsoft.mixedreality.toolkit.examples": "file:MixedReality/com.microsoft.mixedreality.toolkit.examples-2.8.2.tgz",
     "com.microsoft.mixedreality.toolkit.extensions": "file:MixedReality/com.microsoft.mixedreality.toolkit.extensions-2.8.2.tgz",
     "com.microsoft.mixedreality.toolkit.figmabridge": "file:MixedReality/com.microsoft.mixedreality.toolkit.figmabridge-0.1.1.tgz",
