@@ -19,7 +19,7 @@ namespace MRTK.Tutorials.AzureSpatialAnchors
             Application.logMessageReceived += HandleLog;
 
             // Set the starting text
-            debugText.text = "Debug messages will appear here.\n\n";
+            // debugText.text = "Debug messages will appear here.\n\n";
         }
 
         private void OnDestroy()

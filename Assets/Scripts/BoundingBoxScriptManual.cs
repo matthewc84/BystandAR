@@ -14,6 +14,10 @@ namespace BystandAR
         [HideInInspector]
         public float bboxHeight = 0;
         [HideInInspector]
+        public double xCenter = 0;
+        [HideInInspector]
+        public double yCenter = 0;
+        [HideInInspector]
         public bool toObscure = true;
         [HideInInspector]
         public bool isSubject = false;
@@ -61,7 +65,6 @@ namespace BystandAR
             detectionStopwatch.Start();
             frameSanitizer = GameObject.Find("FrameSanitizer").GetComponent<FrameSanitizer>();
         }
-
 
         public void RemoveDetection()
         {
@@ -171,6 +174,10 @@ namespace BystandAR
             return islooking;
         }
 
+        public bool getIsSubject()
+        {
+            return isSubject;
+        }
 
         //If this gameobject is in the same physical space another bounding box, we compare the time they have existed and remove the older one
         //This allows for tracking the amount of eye contact over multiple detections.

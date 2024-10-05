@@ -98,10 +98,15 @@ namespace BystandAR
         // Public fields
         public GameObject objectOutlineCube;
         public int samplingInterval;
+        [SerializeField]
+        private int LoggingFrameStep = 1;
         public bool SanitizeFrames;
+        [SerializeField] // false: turns off debug cube position update, debug cube renderer, texture updates 
+        private bool DebugCubeMode = true;
         public bool userSpeaking;
         public GameObject imagePreviewPlane;
         public GameObject longDepthPreviewPlane;
+        public GameObject debugWindow;
 
         // Private fields
         private NetworkModel _networkModel;
@@ -127,7 +132,7 @@ namespace BystandAR
         private CSVLogger CSVLoggerScript;
 
         [SerializeField]
-        private int frameRateFrequency;
+        private float frameRateFrequency;
 
         private int faceCounter = 0;
         private int faceCubeCounter = 1;
@@ -148,6 +153,9 @@ namespace BystandAR
         private float QRDistMin;
         private float QRDistMax;
         private float QRDistMid;
+
+        [SerializeField]
+        private float distScalingFactor = 1.0f;
 
         private float QRDirMinX;
         private float QRDirMaxX;
@@ -174,6 +182,12 @@ namespace BystandAR
         private Renderer PositioningCubeRenderer;
         private Collider PositioningCubeCollider;
 
+        Vector3 currQRPosition;
+        Quaternion currQRRotation;
+        private bool qrDetectionStatus = false;
+
+        private GameObject[] faceCubesInScene;
+
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
@@ -190,8 +204,6 @@ namespace BystandAR
 
         async void Awake()
         {
-            Debug.Log("In awake");
-
             //  CSV Logger Script
             CSVLoggerScript = Logger.GetComponent<CSVLogger>();
 
@@ -199,15 +211,25 @@ namespace BystandAR
 
             if (CSVLoggerScript.getReadGazeFromCSV())
             {
-                Debug.Log("getReadGazeFromCSV check passed");
-
                 GazeOriginFile = Application.persistentDataPath + "/Logs/" + ReadGazeOriginFromCSVName;
                 HardcodedGazeOriginPath = CSVLoggerScript.loadGazeOriginDataCSV(GazeOriginFile);
 
                 GazeDirFile = Application.persistentDataPath + "/Logs/" + ReadGazeDirFromCSVName;
                 HardcodedGazeDirPath = CSVLoggerScript.loadGazeDirDataCSV(GazeDirFile);
 
-                QRDirFile = Application.persistentDataPath + "/../Logs/" + ReadQRDirFromCSVName;
+                QRDirFile = Application.persistentDataPath + "/Logs/" + ReadQRDirFromCSVName;
+                
+                /*
+                if (File.Exists(QRDirFile))
+                {
+                    Debug.Log("QRDirFile found!");
+                }
+                else
+                {
+                    Debug.Log("QRDirFile not found");
+                }
+                */
+
                 HardcodedQRDirPath = CSVLoggerScript.loadQRDirDataCSV(QRDirFile);
 
                 QRDirMinX = CSVLoggerScript.getQRDirMinX();
@@ -222,25 +244,22 @@ namespace BystandAR
                 QRDirMaxZ = CSVLoggerScript.getQRDirMaxZ();
                 QRDirMidZ = (QRDirMinZ + QRDirMaxZ) / 2;
 
-                
+                /*
                 Debug.Log("QRDirMinX: " + QRDirMinX);
                 Debug.Log("QRDirMaxX: " + QRDirMaxX);
                 Debug.Log("QRDirMinY: " + QRDirMinY);
                 Debug.Log("QRDirMaxY: " + QRDirMaxY);
                 Debug.Log("QRDirMinZ: " + QRDirMinZ);
                 Debug.Log("QRDirMaxZ: " + QRDirMaxZ);
-                
+                */
 
-                QRDistFile = Application.persistentDataPath + "/../Logs/" + ReadQRDistFromCSVName;
+                QRDistFile = Application.persistentDataPath + "/Logs/" + ReadQRDistFromCSVName;
+                
                 HardcodedQRDistPath = CSVLoggerScript.loadQRDistDataCSV(QRDistFile);
 
                 QRDistMin = CSVLoggerScript.getQRDistMin();
                 QRDistMax = CSVLoggerScript.getQRDistMax();
                 QRDistMid = (QRDistMax + QRDistMin) / 2;
-
-               
-                Debug.Log("QRDistMin: " + QRDistMin);
-                Debug.Log("QRDistMax: " + QRDistMax);
             }
         }
 
@@ -249,7 +268,7 @@ namespace BystandAR
             userSpeaking = false;
             eyeGazeProvider = CoreServices.InputSystem?.EyeGazeProvider;
             samplingCounter = samplingInterval;
-            StartCoroutine(FramerateCountLoop());
+            // StartCoroutine(FramerateCountLoop());
 
             EyeGazeVisualizerRenderer = EyeGazeVisualizer.GetComponent<Renderer>();
 
@@ -261,18 +280,28 @@ namespace BystandAR
             //create temp texture to apply SoftwareBitmap to, in order to sanitize
             tempImageTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
 
-            if (imagePreviewPlane != null)
+            if (DebugCubeMode)
             {
-                imageMediaMaterial = imagePreviewPlane.GetComponent<MeshRenderer>().material;
-                imageMediaTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
-                imageMediaMaterial.mainTexture = imageMediaTexture;
-            }
+                if (imagePreviewPlane != null)
+                {
+                    imageMediaMaterial = imagePreviewPlane.GetComponent<MeshRenderer>().material;
+                    imageMediaTexture = new Texture2D(1920, 1080, TextureFormat.BGRA32, false);
+                    imageMediaMaterial.mainTexture = imageMediaTexture;
+                }
 
-            if (longDepthPreviewPlane != null)
+                if (longDepthPreviewPlane != null)
+                {
+                    longDepthMediaMaterial = longDepthPreviewPlane.GetComponent<MeshRenderer>().material;
+                    longDepthMediaTexture = new Texture2D(320, 288, TextureFormat.Alpha8, false);
+                    longDepthMediaMaterial.mainTexture = longDepthMediaTexture;
+                }
+            }
+            else
             {
-                longDepthMediaMaterial = longDepthPreviewPlane.GetComponent<MeshRenderer>().material;
-                longDepthMediaTexture = new Texture2D(320, 288, TextureFormat.Alpha8, false);
-                longDepthMediaMaterial.mainTexture = longDepthMediaTexture;
+                // disable quad (image), depth quad, debug window
+                imagePreviewPlane.SetActive(false);
+                longDepthPreviewPlane.SetActive(false);
+                debugWindow.SetActive(false);
             }
 
             /*
@@ -295,20 +324,20 @@ namespace BystandAR
         }
         catch (Exception ex)
         {
-            Debug.Log("Error initializing inference model:" + ex.Message);
+            // Debug.Log("Error initializing inference model:" + ex.Message);
         }
 
 
         // Create Media Capture instance
         try
         {
-                Debug.Log("Creating MediaCaptureUtility and initializing frame reader.");
+                // Debug.Log("Creating MediaCaptureUtility and initializing frame reader.");
                 _mediaCaptureUtility = new MediaCaptureUtility();
                 await _mediaCaptureUtility.InitializeMediaFrameReaderAsync();
         }
         catch (Exception ex)
         {
-            Debug.Log("Failed to start camera: {ex.Message}. Using loaded/picked image.");
+            // Debug.Log("Failed to start camera: {ex.Message}. Using loaded/picked image.");
         }
 
 
@@ -331,17 +360,16 @@ namespace BystandAR
         }
         catch (Exception ex)
         {
-            Debug.Log("Error starting research mode:" + ex.Message);
-
+            // Debug.Log("Error starting research mode:" + ex.Message);
         }
-
 #endif
-
         }
 
         async void Update()
         {
             samplingCounter += 1;
+
+            faceCubesInScene = GameObject.FindGameObjectsWithTag("BoundingBox");
 
             PositioningCubePosUpdate();
 
@@ -366,7 +394,7 @@ namespace BystandAR
                 }
                 else
                 {
-                    Debug.Log("Gaze Points ended!!");
+                    // Debug.Log("Gaze Points ended!!");
                     origin = new Vector3(0, 0, 0);
                     direction = new Vector3(0, 0, 0);
                 }
@@ -411,15 +439,17 @@ namespace BystandAR
                     {
                         depthData = RetreiveDepthFrame();
                         SanitizedFrames sanitizedFrame = SanitizeFrame(returnFrame, depthData);
-                        Graphics.CopyTexture(sanitizedFrame.sanitizedImageFrame,imageMediaTexture);
-                        imageMediaTexture.Apply();
-                        if (sanitizedFrame.sanitizedDepthFrame != null)
+
+                        if (DebugCubeMode)
                         {
-                            longDepthMediaTexture.LoadRawTextureData(sanitizedFrame.sanitizedDepthFrame);
-                            longDepthMediaTexture.Apply();
+                            Graphics.CopyTexture(sanitizedFrame.sanitizedImageFrame,imageMediaTexture);
+                            imageMediaTexture.Apply();
+                            if (sanitizedFrame.sanitizedDepthFrame != null)
+                            {
+                                longDepthMediaTexture.LoadRawTextureData(sanitizedFrame.sanitizedDepthFrame);
+                                longDepthMediaTexture.Apply();
+                            }
                         }
-
-
                     }
 
                     if (samplingCounter >= samplingInterval)
@@ -445,7 +475,7 @@ namespace BystandAR
                             }
                             catch (Exception ex)
                             {
-                                Debug.Log("Exception:" + ex.Message);
+                                // Debug.Log("Exception:" + ex.Message);
                             }
 
                         });
@@ -454,16 +484,66 @@ namespace BystandAR
 
             }
 #endif
+            if (frameCounter % LoggingFrameStep == 0)
+            {
+                // CSV Logger
+                FramerateCountLoop();
+            }
         }
 
         #endregion
 
+    private void FramerateCountLoop() 
+    {
+        int FPS = (int)(1.0f / Time.smoothDeltaTime);
+        // Debug.Log("Current Frame Rate: " + FPS);
+
+        string finalJSONString = "{";
+        //  create JSON like data structure that stores all info regarding all faceCubesInScene
+        for (int i = 0; i < faceCubesInScene.Length; i++)
+        {
+            var faceCubeScript = faceCubesInScene[i].GetComponent<BoundingBoxScriptManual>();
+
+            string faceCubeName = "\"" + faceCubesInScene[i].name + "\": {";
+
+            Vector3 faceCubeWorldPos = faceCubesInScene[i].transform.position;
+            string faceCubeWorldPosString = "\"3D Position\": \"<" + faceCubeWorldPos.x + " | " + faceCubeWorldPos.y + " | " + faceCubeWorldPos.z + ">\" |";
+
+            bool faceCubeIsSubject = faceCubeScript.getIsSubject();
+            string faceCubeIsSubjectString = "\"isSubject\": \"" + faceCubeIsSubject + "\" |";
+
+            double faceCube2DXCenter = faceCubeScript.xCenter;
+            double faceCube2DYCenter = faceCubeScript.yCenter;
+            string faceCube2DPosString = "\"2D Position\": \"(" + faceCube2DXCenter + " | " + faceCube2DYCenter + ")\" }";
+
+            string faceCubeJSONString = faceCubeName + faceCubeWorldPosString + faceCubeIsSubjectString + faceCube2DPosString + " |";
+
+            finalJSONString += faceCubeJSONString;
+        }
+        finalJSONString += '}';
+
+
+        // log FPS to CSV
+        string writeDateTime = DateTime.Now.ToString("HH-mm-ss.ffff");
+        string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCubesInScene.Length.ToString() + "," + frameCounter + "," + !qrDetectionStatus + "," + toggleButtonState + "," + finalJSONString;
+
+        CSVLoggerScript.addFPStoList(FPSFileLine);
+
+        /*
+        Debug.Log("currDistance: " + currDistance);
+        Debug.Log("currDirection: " + currDirection);
+        */
+
+    }
 
     public void PositioningCubePosUpdate()
     {
         // get latest position and rotation of detected QR code 
-        Vector3 currQRPosition = ArucoDetctionScript.getLatestPosition();
-        Quaternion currQRRotation = ArucoDetctionScript.getLatestRotation();
+        if (!qrDetectionStatus)
+        {
+            currQRPosition = ArucoDetctionScript.getLatestPosition();
+            currQRRotation = ArucoDetctionScript.getLatestRotation();
+        }
 
         // place PositioningCube at certain distance and direction w.r.t. the detected QR code
         /*
@@ -473,11 +553,12 @@ namespace BystandAR
         */
 
         Vector3 midDir = new Vector3(QRDirMidX, QRDirMidY, QRDirMidZ);
-        PositioningCubeRenderer.transform.position = currQRPosition - (midDir.normalized * (QRDistMid));
+        // PositioningCubeRenderer.transform.position = currQRPosition - (midDir.normalized * (QRDistMid));
+        PositioningCubeRenderer.transform.position = currQRPosition - (midDir.normalized * (QRDistMid * distScalingFactor));
 
 
         // Debug.Log("PositioningCubeRenderer.transform.position: " + PositioningCubeRenderer.transform.position);
-    }
+        }
 
     private void UpdateButtonsPosition()
     {
@@ -487,66 +568,16 @@ namespace BystandAR
 
     public bool BoundsCheck()
     {
-        /*
-        currDistance = ArucoDetctionScript.getLatestDistance();
-        currDirection = ArucoDetctionScript.getLatestDirection();
-
-        bool DirxBounds = false;
-        bool DiryBounds = false;
-        bool DirzBounds = false;
-        bool distBounds = false;
-
-        if (currDirection.x >= QRDirMinX - boundsBuffer && currDirection.x <= QRDirMaxX + boundsBuffer)
-        {
-            DirxBounds = true;
-        }
-        else
-        {
-            // Debug.Log("X out of bounds");
-        }
-
-
-        if (currDirection.y >= QRDirMinY - boundsBuffer && currDirection.y <= QRDirMaxY + boundsBuffer)
-        {
-            DiryBounds = true;
-        }
-        else
-        {
-            // Debug.Log("Y out of bounds");
-        }
-
-
-        if (currDirection.z >= QRDirMinZ - boundsBuffer && currDirection.z <= QRDirMaxZ + boundsBuffer)
-        {
-            DirzBounds = true;
-        }
-        else
-        {
-            // Debug.Log("Z out of bounds");
-        }
-
-        if (currDistance >= QRDistMin - DistBoundsBuffer && currDistance <= QRDistMax + DistBoundsBuffer)
-        {
-            distBounds = true;
-        }
-        else
-        {
-            // Debug.Log("Distance out of bounds");
-        }
-
-        if (DirxBounds && DiryBounds && DirzBounds && distBounds)
-        {
-            // Debug.Log("in bounds");
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-        */
-
         if (PositioningCubeCollider.bounds.Contains(Camera.main.transform.position))
         {
+            if (!qrDetectionStatus)
+            {
+                // Debug.Log("qrDetectionStatus set to true now -- should not detect QR anymore");
+                qrDetectionStatus = true;
+                // ArucoDetctionScript.OnDisable();
+                ArucoDetectionObject.SetActive(false);
+            }
+
             return true;
         }
         else
@@ -604,6 +635,9 @@ namespace BystandAR
                     bboxScript.staleCounter = 0;
                     bboxScript.bboxWidth = (float)face.Width * 1.25f;
                     bboxScript.bboxHeight = (float)face.Height * 1.25f;
+
+                    bboxScript.xCenter = xCoord;
+                    bboxScript.yCenter = yCoord;
                 }
                 else
                 {
@@ -615,6 +649,9 @@ namespace BystandAR
                     var bboxScript = newObject.GetComponent<BoundingBoxScriptManual>();
                     bboxScript.bboxWidth = (float)face.Width * 1.25f;
                     bboxScript.bboxHeight = (float)face.Height * 1.25f;
+
+                    bboxScript.xCenter = xCoord;
+                    bboxScript.yCenter = yCoord;
                 }
         }
     }
@@ -652,7 +689,7 @@ namespace BystandAR
                 
                 if (targetGameObject.tag == "BoundingBox")
                 {
-                    Debug.Log("Gaze collision with FaceCube name: " + targetGameObject.name);
+                    // Debug.Log("Gaze collision with FaceCube name: " + targetGameObject.name);
                     
                     var targetFaceCubeScript = targetGameObject.GetComponent<BoundingBoxScriptManual>();
                     
@@ -669,7 +706,7 @@ namespace BystandAR
 
                     // isLooking for all other facecube's should be false
 
-                    foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
+                    foreach (GameObject face in faceCubesInScene)
                     {
                         if (face.name != targetGameObject.name)
                         {
@@ -687,7 +724,7 @@ namespace BystandAR
                 {
                     // Debug.Log("Eye Gaze not colliding with Face cube");
                     
-                    foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
+                    foreach (GameObject face in faceCubesInScene)
                     {
                         var faceCubeScript = face.GetComponent<BoundingBoxScriptManual>();
                         
@@ -723,8 +760,8 @@ namespace BystandAR
             float depthToImageHeightRatio = 288.0F / (float)returnFrame.bitmap.PixelHeight;
 
             //for each detection GameObject, we convert the current 3D position to to 2D position of the current depth frame
-            foreach (GameObject face in GameObject.FindGameObjectsWithTag("BoundingBox"))
-                {
+            foreach (GameObject face in faceCubesInScene)
+            {
                 var boundingBoxScript = face.GetComponent<BoundingBoxScriptManual>();
                 Vector3 relativeNormalizedPos = (face.transform.position - Camera.main.transform.position).normalized;
                 float dot = Vector3.Dot(relativeNormalizedPos, Camera.main.transform.forward);
@@ -806,6 +843,7 @@ namespace BystandAR
         }
 
 #endif
+        /*
         IEnumerator FramerateCountLoop()
         {
             while (true)
@@ -814,20 +852,46 @@ namespace BystandAR
                 yield return new WaitForSeconds(frameRateFrequency);
 
                 int FPS = (int)(1.0f / Time.smoothDeltaTime);
-                Debug.Log("Current Frame Rate: " + FPS);
-                
+                // Debug.Log("Current Frame Rate: " + FPS);
+
+                string finalJSONString = "{";
+                //  create JSON like data structure that stores all info regarding all faceCubesInScene
+                for (int i = 0; i < faceCubesInScene.Length; i++)
+                {
+                    var faceCubeScript = faceCubesInScene[i].GetComponent<BoundingBoxScriptManual>();
+
+                    string faceCubeName = "\"" + faceCubesInScene[i].name + "\": {";
+
+                    Vector3 faceCubeWorldPos = faceCubesInScene[i].transform.position;
+                    string faceCubeWorldPosString = "\"3D Position\": \"<" + faceCubeWorldPos.x + " | " + faceCubeWorldPos.y + " | " + faceCubeWorldPos.z + ">\" |";
+
+                    bool faceCubeIsSubject = faceCubeScript.getIsSubject();
+                    string faceCubeIsSubjectString = "\"isSubject\": \"" + faceCubeIsSubject + "\" |";
+
+                    double faceCube2DXCenter = faceCubeScript.xCenter;
+                    double faceCube2DYCenter = faceCubeScript.yCenter;
+                    string faceCube2DPosString = "\"2D Position\": \"(" + faceCube2DXCenter + " | " + faceCube2DYCenter + ")\" }";
+
+                    string faceCubeJSONString = faceCubeName + faceCubeWorldPosString + faceCubeIsSubjectString + faceCube2DPosString + " |";
+
+                    finalJSONString += faceCubeJSONString;
+                }
+                finalJSONString += '}';
+
+
                 // log FPS to CSV
                 string writeDateTime = DateTime.Now.ToString("HH-mm-ss.ffff");
-                string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCounter.ToString() + "," + frameCounter;
+                string FPSFileLine = writeDateTime + "," + FPS.ToString() + "," + faceCubesInScene.Length.ToString() + "," + frameCounter + "," + !qrDetectionStatus + "," + toggleButtonState + "," + finalJSONString;
 
                 CSVLoggerScript.addFPStoList(FPSFileLine);
 
-                /*
+                
                 Debug.Log("currDistance: " + currDistance);
                 Debug.Log("currDirection: " + currDirection);
-                */
+                
             }
         }
+        */
 
 
 #if ENABLE_WINMD_SUPPORT

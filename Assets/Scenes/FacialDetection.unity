@@ -728,23 +728,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22a8e7b1eba83284da617e07f68119de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ReadGazeOriginFromCSVName: GazeOrigin2024-31-7--20-04-52.csv
-  ReadGazeDirFromCSVName: GazeDir2024-31-7--20-04-52.csv
-  ReadQRDirFromCSVName: QRDir2024-31-7--20-04-52.csv
-  ReadQRDistFromCSVName: QRDist2024-31-7--20-04-52.csv
+  ReadGazeOriginFromCSVName: GazeOrigin2024-24-9--18-57-58.csv
+  ReadGazeDirFromCSVName: GazeDir2024-24-9--18-57-58.csv
+  ReadQRDirFromCSVName: QRDir2024-24-9--18-57-58.csv
+  ReadQRDistFromCSVName: QRDist2024-24-9--18-57-58.csv
   objectOutlineCube: {fileID: 1077441217099968542, guid: 31b29c7276a135840ac150a6d8de480e, type: 3}
-  samplingInterval: 6
+  samplingInterval: 8
+  LoggingFrameStep: 1
   SanitizeFrames: 1
+  DebugCubeMode: 0
   userSpeaking: 0
   imagePreviewPlane: {fileID: 483625174}
   longDepthPreviewPlane: {fileID: 1605988174}
+  debugWindow: {fileID: 1985308836}
   EyeGazeVisualizer: {fileID: 2143219527}
   VisualizationToggle: 1
   Logger: {fileID: 1759264493}
-  frameRateFrequency: 2
+  frameRateFrequency: 1
   ToggleButton: {fileID: 1338422093}
   toggleButtonOffset: {x: 0.2, y: -0.3, z: 0.01}
   ArucoDetectionObject: {fileID: 2135632751}
+  distScalingFactor: 0.1
   PositioningCube: {fileID: 847861857}
 --- !u!4 &648552315
 Transform:
@@ -1776,6 +1780,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f59df37c788203c48a08a4dc5c53f19e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  FPSCSVWriteFrequency: -1
   ReadGazeFromCSV: 1
 --- !u!4 &1759264495
 Transform:
@@ -1792,6 +1797,11 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1985308836 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4679913627488335819, guid: 59cc8aa8819826949aab4c10b20639ab, type: 3}
+  m_PrefabInstance: {fileID: 45902010}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2135632751
 GameObject:
   m_ObjectHideFlags: 0
@@ -1840,7 +1850,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   markerPrefab: {fileID: 4088238542439138568, guid: e3d42953b2e41934fa9809b90d94d390, type: 3}
   enabledMarkerTypes: 01000000
-  defaultTransformMode: 0
+  defaultTransformMode: 1
 --- !u!114 &2135632756
 MonoBehaviour:
   m_ObjectHideFlags: 0

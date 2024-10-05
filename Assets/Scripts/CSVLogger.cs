@@ -1,4 +1,3 @@
-/*
 using System;
 using System.IO;
 // using System.Linq;
@@ -6,25 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
-*/
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.UI;
-using Unity.Mathematics;
-using Unity.Collections;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.IO;
-using Microsoft.MixedReality.Toolkit.Input;
-using Microsoft.MixedReality.Toolkit.Utilities;
-using Microsoft.MixedReality.Toolkit;
-using Microsoft.MixedReality.OpenXR;
-
 
 public class CSVLogger : MonoBehaviour
 {
@@ -43,6 +23,10 @@ public class CSVLogger : MonoBehaviour
     private string GazeDirCSVFilePath;
     private TextWriter GazeDirtw;
 
+    [SerializeField]
+    private int FPSCSVWriteFrequency;   // enter -1 to write once only at the end otherwise every x number of lines will be written
+    private int writeAtEndNumber = -1;
+
     private List<string> FPSList = new List<string>();
     private List<string> DrawPredTimeList = new List<string>();
     private List<Tuple<string, Vector3>> GazeOriginList = new List<Tuple<string, Vector3>>();
@@ -60,32 +44,32 @@ public class CSVLogger : MonoBehaviour
     private List<float> gazeOriginYArray = new List<float>();
     private List<float> gazeOriginZArray = new List<float>();
 
-    private float gazeOriginMinX;
-    private float gazeOriginMaxX;
+    private float gazeOriginMinX = 10000;
+    private float gazeOriginMaxX = -10000;
 
-    private float gazeOriginMinY;
-    private float gazeOriginMaxY;
+    private float gazeOriginMinY = 10000;
+    private float gazeOriginMaxY = -10000;
 
-    private float gazeOriginMinZ;
-    private float gazeOriginMaxZ;
+    private float gazeOriginMinZ = 10000;
+    private float gazeOriginMaxZ = -10000;
 
     private List<float> QRDistXArray = new List<float>();
 
-    private float QRDistMin;
-    private float QRDistMax;
+    private float QRDistMin = 10000;
+    private float QRDistMax = -10000;
 
     private List<float> QRDirXArray = new List<float>();
     private List<float> QRDirYArray = new List<float>();
     private List<float> QRDirZArray = new List<float>();
 
-    private float QRDirMinX;
-    private float QRDirMaxX;
+    private float QRDirMinX = 10000;
+    private float QRDirMaxX = -10000;
 
-    private float QRDirMinY;
-    private float QRDirMaxY;
+    private float QRDirMinY = 10000;
+    private float QRDirMaxY = -10000;
 
-    private float QRDirMinZ;
-    private float QRDirMaxZ;
+    private float QRDirMinZ = 10000;
+    private float QRDirMaxZ = -10000;
 
     // functions //
 
@@ -104,14 +88,16 @@ public class CSVLogger : MonoBehaviour
         CSVFilePath = Application.persistentDataPath + "/Logs/" + currentDateTime + ".csv";
         // initiate columns of CSV
         tw = new StreamWriter(CSVFilePath, false); // false indicates overwriting the file
-        tw.WriteLine("TimeStamp, FPS, # Faces, frame #"); // edit this to update coloumns of CSV
+        tw.WriteLine("TimeStamp, FPS, # Faces, frame #, QRDetection Status, Hardcoded Eye Gaze, DetectedFaces Info"); // edit this to update coloumns of CSV
         tw.Close();
 
+        /*
         // Time between drawPredictions logger
         CSVFilePathDrawPredTime = Application.persistentDataPath + "/Logs/DrawPredTimes" + currentDateTime + ".csv";
         twDrawPredTime = new StreamWriter(CSVFilePathDrawPredTime, false);
         twDrawPredTime.WriteLine("TimeStamp, DateTime");
         twDrawPredTime.Close();
+        */
     }
 
     void Update()
@@ -120,7 +106,32 @@ public class CSVLogger : MonoBehaviour
 
     public void addFPStoList(string fpsLine)
     {
-        FPSList.Add(fpsLine);
+        // FPSList.Add(fpsLine);
+
+        if (FPSCSVWriteFrequency == writeAtEndNumber)
+        {
+            FPSList.Add(fpsLine);
+        }
+
+        if (FPSCSVWriteFrequency == 1)
+        {
+            Debug.Log("Writing every line directly without lists");
+
+            tw = new StreamWriter(CSVFilePath, true); // true to indicate no overwriting, just append
+            tw.WriteLine(fpsLine);
+            tw.Close();
+        }
+        else
+        {
+            if (FPSList.Count >= FPSCSVWriteFrequency)
+            {
+                batchWriteToFiles();
+
+                FPSList = new List<string>();
+            }
+
+            FPSList.Add(fpsLine);
+        }
     }
 
     public void addDrawPredTimetoList(string drawPredTimeList)
@@ -145,7 +156,7 @@ public class CSVLogger : MonoBehaviour
         batchWriteToFiles();
 
         FPSList = new List<string>();
-        DrawPredTimeList = new List<string>();
+        // DrawPredTimeList = new List<string>();
         GazeOriginList = new List<Tuple<string, Vector3>>();
         GazeDirList = new List<Tuple<string, Vector3>>();
     }
@@ -161,6 +172,7 @@ public class CSVLogger : MonoBehaviour
 
         tw.Close();
 
+        /*
         // Time between drawPredictions logger
         twDrawPredTime = new StreamWriter(CSVFilePathDrawPredTime, true); // true to indicate no overwriting, just append
         for (int i = 0; i < DrawPredTimeList.Count; i++)
@@ -169,6 +181,7 @@ public class CSVLogger : MonoBehaviour
         }
 
         twDrawPredTime.Close();
+        */
     }
 
     public bool getReadGazeFromCSV()
@@ -280,12 +293,8 @@ public class CSVLogger : MonoBehaviour
 
     public Queue<float> loadQRDistDataCSV(string QRDistFile)
     {
-        Debug.Log("Inside loadQRDistDataCSV");
-
         if (File.Exists(QRDistFile))
         {
-            Debug.Log("QRDisFile found in device");
-
             StreamReader strReader = new StreamReader(QRDistFile);
             bool eof = false;
 
@@ -304,17 +313,25 @@ public class CSVLogger : MonoBehaviour
                 float QRDistFloat = float.Parse(data_values[1]);
 
                 QRDistArray.Enqueue(QRDistFloat);
+
+                if (QRDistFloat < QRDistMin)
+                {
+                    QRDistMin = QRDistFloat;
+                }
+                else if (QRDistFloat > QRDistMax)
+                {
+                    QRDistMax = QRDistFloat;
+                }
+
             }
         }
-        else
-        {
-            Debug.Log("QRDisFile not found");
-        }
 
+        /*
         var QRDistActualArray = QRDistArray.ToArray();
 
         QRDistMin = QRDistActualArray.Min();
         QRDistMax = QRDistActualArray.Max();
+        */
 
         return QRDistArray;
     }
@@ -333,7 +350,6 @@ public class CSVLogger : MonoBehaviour
     {
         if (File.Exists(QRDirFile))
         {
-
             StreamReader strReader = new StreamReader(QRDirFile);
             bool eof = false;
 
@@ -360,12 +376,43 @@ public class CSVLogger : MonoBehaviour
 
                 QRDirArray.Enqueue(QRDirVector);
 
+                /*
                 QRDirXArray.Add(QRDirVector.x);
                 QRDirYArray.Add(QRDirVector.y);
                 QRDirZArray.Add(QRDirVector.z);
+                */
+
+                if (QRDirVector.x < QRDirMinX)
+                {
+                    QRDirMinX = QRDirVector.x;
+                }
+                else if (QRDirVector.x > QRDirMaxX)
+                {
+                    QRDirMaxX = QRDirVector.x;
+                }
+
+                if (QRDirVector.y < QRDirMinY)
+                {
+                    QRDirMinY = QRDirVector.y;
+                }
+                else if (QRDirVector.y > QRDirMaxY)
+                {
+                    QRDirMaxY = QRDirVector.y;
+                }
+
+                if (QRDirVector.z < QRDirMinZ)
+                {
+                    QRDirMinZ = QRDirVector.z;
+                }
+                else if (QRDirVector.z > QRDirMaxZ)
+                {
+                    QRDirMaxZ = QRDirVector.z;
+                }
+
             }
         }
 
+        /*
         var QRDirXActualArray = QRDirXArray.ToArray();
         var QRDirYActualArray = QRDirYArray.ToArray();
         var QRDirZActualArray = QRDirZArray.ToArray();
@@ -378,6 +425,7 @@ public class CSVLogger : MonoBehaviour
 
         QRDirMinZ = QRDirZActualArray.Min();
         QRDirMaxZ = QRDirZActualArray.Max();
+        */
 
         return QRDirArray;
     }

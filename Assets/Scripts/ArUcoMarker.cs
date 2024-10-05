@@ -22,6 +22,8 @@ public class ArUcoMarker : MonoBehaviour
 
     void OnQRCodesChanged(ARMarkersChangedEventArgs args)
     {
+        // Debug.Log("OnQRCodesChanged");
+
         /*
         foreach (ARMarker qrCode in args.added)
             Debug.Log($"QR code with the ID {qrCode.trackableId} added.");
