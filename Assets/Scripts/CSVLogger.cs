@@ -36,7 +36,9 @@ public class CSVLogger : MonoBehaviour
     private bool ReadGazeFromCSV = false;
 
     private Queue<Vector3> gazeOriginArray = new Queue<Vector3>();
+    private List<Tuple<int, Vector3>> gazeOriginArrayList = new List<Tuple<int, Vector3>>();
     private Queue<Vector3> gazeDirArray = new Queue<Vector3>();
+    private List<Tuple<int, Vector3>> gazeDirArrayList = new List<Tuple<int, Vector3>>();
     private Queue<float> QRDistArray = new Queue<float>();
     private Queue<Vector3> QRDirArray = new Queue<Vector3>();
 
@@ -225,6 +227,68 @@ public class CSVLogger : MonoBehaviour
         return gazeOriginArray;
     }
 
+    public List<Tuple<int, Vector3>> loadListFromGazeOriginDataCSV(string GazeOriginFile)
+    {
+        if (File.Exists(GazeOriginFile))
+        {
+
+            StreamReader strReader = new StreamReader(GazeOriginFile);
+            bool eof = false;
+
+            while (!eof)
+            {
+                string line = strReader.ReadLine();
+
+                if (line == null)
+                {
+                    eof = true;
+                    break;
+                }
+
+                var data_values = line.Split(',');
+
+                // get time stamp
+                int elapsedTime = Int32.Parse(data_values[0]);
+
+                // remove the leading ( and trailing ) from the line
+                line = data_values[1] + "," + data_values[2] + "," + data_values[3];
+                line = line.Substring(1);
+                line = line.Remove(line.Length - 1);
+
+                data_values = line.Split(',');
+
+                Vector3 GazeOriginVector = new Vector3(float.Parse(data_values[0]), float.Parse(data_values[1]), float.Parse(data_values[2]));
+
+                // gazeOriginArray.Enqueue(GazeOriginVector);
+                var timeAndGazeOriginTupel = new Tuple<int, Vector3>(elapsedTime, GazeOriginVector);
+                gazeOriginArrayList.Add(timeAndGazeOriginTupel);
+
+                /*
+                gazeOriginXArray.Add(GazeOriginVector.x);
+                gazeOriginYArray.Add(GazeOriginVector.y);
+                gazeOriginZArray.Add(GazeOriginVector.z);
+                */
+            }
+        }
+
+        /*
+        var gazeOriginXActualArray = gazeOriginXArray.ToArray();
+        var gazeOriginYActualArray = gazeOriginYArray.ToArray();
+        var gazeOriginZActualArray = gazeOriginZArray.ToArray();
+
+        gazeOriginMinX = gazeOriginXActualArray.Min();
+        gazeOriginMaxX = gazeOriginXActualArray.Max();
+
+        gazeOriginMinY = gazeOriginYActualArray.Min();
+        gazeOriginMaxY = gazeOriginYActualArray.Max();
+
+        gazeOriginMinZ = gazeOriginZActualArray.Min();
+        gazeOriginMaxZ = gazeOriginZActualArray.Max();
+        */
+
+        return gazeOriginArrayList;
+    }
+
     public float getgazeOriginMinX()
     {
         return gazeOriginMinX;
@@ -289,6 +353,47 @@ public class CSVLogger : MonoBehaviour
         }
 
         return gazeDirArray;
+    }
+
+    public List<Tuple<int, Vector3>> loadListFromGazeDirDataCSV(string GazeDirFile)
+    {
+        if (File.Exists(GazeDirFile))
+        {
+
+            StreamReader strReader = new StreamReader(GazeDirFile);
+            bool eof = false;
+
+            while (!eof)
+            {
+                string line = strReader.ReadLine();
+
+                if (line == null)
+                {
+                    eof = true;
+                    break;
+                }
+
+                var data_values = line.Split(',');
+
+                // get time stamp
+                int elapsedTime = Int32.Parse(data_values[0]);
+
+                // remove the leading ( and trailing ) from the line
+                line = data_values[1] + "," + data_values[2] + "," + data_values[3];
+                line = line.Substring(1);
+                line = line.Remove(line.Length - 1);
+
+                data_values = line.Split(',');
+
+                Vector3 GazeDirVector = new Vector3(float.Parse(data_values[0]), float.Parse(data_values[1]), float.Parse(data_values[2]));
+
+                // gazeDirArray.Enqueue(GazeDirVector);
+                var timeAndGazeOriginTupel = new Tuple<int, Vector3>(elapsedTime, GazeDirVector);
+                gazeDirArrayList.Add(timeAndGazeOriginTupel);
+            }
+        }
+
+        return gazeDirArrayList;
     }
 
     public Queue<float> loadQRDistDataCSV(string QRDistFile)

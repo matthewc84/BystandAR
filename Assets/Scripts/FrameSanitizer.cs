@@ -13,6 +13,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Mathematics;
 using Unity.Collections;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.InteropServices;
@@ -87,8 +89,13 @@ namespace BystandAR
         private string ReadQRDistFromCSVName = "QRDist2024-18-6--19-45-33.csv";
         private string QRDistFile;
 
+        /*
         private Queue<Vector3> HardcodedGazeOriginPath = new Queue<Vector3>();
         private Queue<Vector3> HardcodedGazeDirPath = new Queue<Vector3>();
+        */
+        private List<Tuple<int, Vector3>> HardcodedGazeOriginPath = new List<Tuple<int, Vector3>>();
+        private List<Tuple<int, Vector3>> HardcodedGazeDirPath = new List<Tuple<int, Vector3>>();
+
         private Queue<Vector3> HardcodedQRDirPath = new Queue<Vector3>();
         private Queue<float> HardcodedQRDistPath = new Queue<float>();
 
@@ -140,6 +147,7 @@ namespace BystandAR
         private DateTime lastCallToDrawPred = DateTime.Now;
 
         private bool toggleButtonState = false;
+        private int togglePressCount = 0;
         [SerializeField]
         private GameObject ToggleButton;
         // private Renderer ToggleButtonRenderer;
@@ -188,6 +196,10 @@ namespace BystandAR
 
         private GameObject[] faceCubesInScene;
 
+        private int gazeIndex = 1;
+        private Stopwatch timer = new Stopwatch();
+        private int elapsedMilliseconds = 0;
+
 #if ENABLE_WINMD_SUPPORT
     private Windows.Perception.Spatial.SpatialCoordinateSystem worldSpatialCoordinateSystem;
     HL2ResearchMode researchMode;
@@ -212,10 +224,12 @@ namespace BystandAR
             if (CSVLoggerScript.getReadGazeFromCSV())
             {
                 GazeOriginFile = Application.persistentDataPath + "/Logs/" + ReadGazeOriginFromCSVName;
-                HardcodedGazeOriginPath = CSVLoggerScript.loadGazeOriginDataCSV(GazeOriginFile);
+                // HardcodedGazeOriginPath = CSVLoggerScript.loadGazeOriginDataCSV(GazeOriginFile);
+                HardcodedGazeOriginPath = CSVLoggerScript.loadListFromGazeOriginDataCSV(GazeOriginFile);
 
                 GazeDirFile = Application.persistentDataPath + "/Logs/" + ReadGazeDirFromCSVName;
-                HardcodedGazeDirPath = CSVLoggerScript.loadGazeDirDataCSV(GazeDirFile);
+                // HardcodedGazeDirPath = CSVLoggerScript.loadGazeDirDataCSV(GazeDirFile);
+                HardcodedGazeDirPath = CSVLoggerScript.loadListFromGazeDirDataCSV(GazeDirFile);
 
                 QRDirFile = Application.persistentDataPath + "/Logs/" + ReadQRDirFromCSVName;
                 
@@ -369,6 +383,21 @@ namespace BystandAR
         {
             samplingCounter += 1;
 
+            if (togglePressCount == 1)
+            {
+                Debug.Log("Starting stopwatch");
+
+                // start timer
+                timer.Start();
+
+                togglePressCount++;
+            }
+
+            if (togglePressCount > 0)
+            {
+                elapsedMilliseconds = (int)timer.ElapsedMilliseconds;
+            }
+
             faceCubesInScene = GameObject.FindGameObjectsWithTag("BoundingBox");
 
             PositioningCubePosUpdate();
@@ -387,9 +416,57 @@ namespace BystandAR
             {
                 if (HardcodedGazeOriginPath.Count > 0 && HardcodedGazeDirPath.Count > 0)
                 {
+                    /*
                     origin = HardcodedGazeOriginPath.Dequeue();
                     // Debug.Log("origin (from file): " + origin);
                     direction = HardcodedGazeDirPath.Dequeue();
+                    */
+
+                    for (int i = gazeIndex; i < HardcodedGazeOriginPath.Count; i++)
+                    {
+                        int currentElapsedTime = elapsedMilliseconds;
+                        int storedElapsedTime = HardcodedGazeOriginPath[gazeIndex].Item1; // could have used any of the eye gaze data files to get this
+
+                        Debug.Log("current time: " + currentElapsedTime);
+                        Debug.Log("time at index i: " + i + " is: " + storedElapsedTime);
+
+                        // find the exact match
+                        if (currentElapsedTime == storedElapsedTime)
+                        {
+                            Debug.Log("Found exact time match");
+
+                            origin = HardcodedGazeOriginPath[gazeIndex].Item2;
+                            direction = HardcodedGazeDirPath[gazeIndex].Item2;
+
+                            gazeIndex = i;
+
+                            break;
+                        }
+
+                        // if not exact match then compare the next value. If greater then use the current one
+                        // otherwise iterate
+                        if (currentElapsedTime < storedElapsedTime)
+                        {
+                            Debug.Log("Current time is < stored time at current index. Picking the last timestamp's eye gaze");
+
+                            origin = HardcodedGazeOriginPath[gazeIndex - 1].Item2;
+                            direction = HardcodedGazeDirPath[gazeIndex - 1].Item2;
+
+                            gazeIndex = i;
+
+                            break;
+                        }
+
+                        if (currentElapsedTime > storedElapsedTime)
+                        {
+                            Debug.Log("Current time is > stored time at current index. Moving to next index");
+
+                            gazeIndex = i;
+
+                            continue;
+                        }
+                    }
+
                     direction = (direction).normalized;
                 }
                 else
@@ -588,6 +665,8 @@ namespace BystandAR
 
     public void toggleButtonStateController()
     {
+        togglePressCount++;
+
         toggleButtonState = !toggleButtonState;
     }
 
